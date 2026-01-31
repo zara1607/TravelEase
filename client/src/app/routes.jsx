@@ -13,6 +13,7 @@ import Search from '../pages/Search'
 import Booking from '../pages/Booking'
 import DashboardPage from '../pages/Dashboard'
 import NotFound from '../pages/NotFound'
+import PackagesPageMMT from '../pages/PackagesPageMMT'  // ✅ ADD THIS IMPORT
 
 // Auth Pages
 import Login from '../features/auth/Login'
@@ -67,10 +68,12 @@ export const AppRoutes = () => {
       {/* Public Routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/search" element={<Search />} />
+        <Route path="/search" element={<PackagesPageMMT />} />  {/* ✅ UPDATE THIS */}
+        <Route path="/packages" element={<PackagesPageMMT />} />  {/* ✅ ADD THIS */}
         <Route path="/flights/:id" element={<Booking />} />
         <Route path="/hotels/:id" element={<Booking />} />
         <Route path="/packages/:id" element={<Booking />} />
+        <Route path="booking/:type/:id" element={<Booking />} />
       </Route>
 
       {/* Auth Routes */}

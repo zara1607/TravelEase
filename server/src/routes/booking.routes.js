@@ -1,26 +1,31 @@
-import express from 'express'
+// server/src/routes/booking.routes.js
+// ES Module version
+
+import express from 'express';
 import {
   createBooking,
   getUserBookings,
   getBookingById,
   cancelBooking,
-  getAllBookings
-} from '../controllers/booking.controller.js'
-import { protect } from '../middlewares/auth.middleware.js'
-import { authorize } from '../middlewares/role.middleware.js'
-import { createBookingValidator, idValidator } from '../utils/validators.js'
+  updateBookingStatus,
+  getAllBookings,
+} from '../controllers/booking.controller.js';
+import { protect } from '../middlewares/auth.middleware.js';
+import { admin } from '../middlewares/role.middleware.js';
 
-const router = express.Router()
+const router = express.Router();
 
-// All routes are protected
-router.use(protect)
+// Protected routes (require authentication)
+router.use(protect);
 
-router.post('/', createBookingValidator, createBooking)
-router.get('/user', getUserBookings)
-router.get('/:id', idValidator, getBookingById)
-router.delete('/:id', idValidator, cancelBooking)
+// User routes
+router.post('/', createBooking);
+router.get('/user', getUserBookings);
+router.get('/:id', getBookingById);
+router.patch('/:id/cancel', cancelBooking);
 
-// Admin only
-router.get('/', authorize('admin'), getAllBookings)
+// Admin routes
+router.get('/', admin, getAllBookings);
+router.patch('/:id/status', admin, updateBookingStatus);
 
-export default router
+export default router;

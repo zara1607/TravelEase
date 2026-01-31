@@ -1,258 +1,406 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { User, Mail, Phone, Calendar, CreditCard } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card'
-import Button from '../../ui/Button'
-import { useMutation } from '@tanstack/react-query'
-import { createBooking } from './bookings.api'
-import toast from 'react-hot-toast'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import Button from '../../ui/Button';
 
-const BookingForm = ({ itemId, itemType, totalPrice }) => {
-  const navigate = useNavigate()
+const BookingForm = ({ type, onSubmit, itemData, onPricingUpdate }) => {
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
+    checkIn: '',
+    checkOut: '',
+    departureDate: '',
+    returnDate: '',
+    numberOfGuests: 1,
+    numberOfAdults: 1,
+    numberOfChildren: 0,
     specialRequests: '',
-    // Payment fields
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: ''
-  })
+    agreeToTerms: false,
+  });
 
-  const bookingMutation = useMutation({
-    mutationFn: createBooking,
-    onSuccess: (data) => {
-      toast.success('Booking confirmed successfully!')
-      navigate(`/dashboard/bookings`)
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Booking failed. Please try again.')
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type: inputType, checked } = e.target;
+    
+    let processedValue = inputType === 'checkbox' ? checked : value;
+    
+    // Convert number inputs to integers
+    if (name === 'numberOfAdults' || name === 'numberOfChildren') {
+      processedValue = parseInt(value) || 0;
     }
-  })
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: processedValue,
+    }));
+    
+    // Update pricing immediately when relevant fields change
+    if (onPricingUpdate && (
+      name === 'numberOfAdults' || 
+      name === 'numberOfChildren' || 
+      name === 'checkIn' || 
+      name === 'checkOut' || 
+      name === 'departureDate'
+    )) {
+      // Call pricing update with the new value
+      const updates = { [name]: processedValue };
+      onPricingUpdate(updates);
+    }
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const validateForm = () => {
+    const newErrors = {};
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
 
-    // Validation
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      toast.error('Please fill in all required fields')
-      return
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
     }
 
-    // Create booking payload
-    const bookingData = {
-      itemId,
-      itemType,
-      passengerDetails: {
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone
-      },
-      specialRequests: formData.specialRequests,
-      totalPrice,
-      paymentMethod: 'card'
+    if (type === 'hotel') {
+      if (!formData.checkIn) newErrors.checkIn = 'Check-in date is required';
+      if (!formData.checkOut) newErrors.checkOut = 'Check-out date is required';
+      
+      if (formData.checkIn && formData.checkOut) {
+        if (new Date(formData.checkOut) <= new Date(formData.checkIn)) {
+          newErrors.checkOut = 'Check-out must be after check-in';
+        }
+      }
+    } else if (type === 'flight' || type === 'tour') {
+      if (!formData.departureDate) newErrors.departureDate = `${type === 'tour' ? 'Tour' : 'Departure'} date is required`;
     }
 
-    bookingMutation.mutate(bookingData)
-  }
+    if (!formData.agreeToTerms) {
+      newErrors.agreeToTerms = 'You must agree to the terms and conditions';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('Submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Passenger Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Passenger Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Personal Information Section */}
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Personal Information
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name *
+              First Name *
             </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                name="fullName"
-                required
-                value={formData.fullName}
-                onChange={handleInputChange}
-                placeholder="John Doe"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-            </div>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.firstName ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="John"
+            />
+            {errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address *
+              Last Name *
             </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="john@example.com"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-            </div>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.lastName ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Doe"
+            />
+            {errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="john.doe@example.com"
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number *
             </label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                name="phone"
-                required
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="+91 1234567890"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Special Requests (Optional)
-            </label>
-            <textarea
-              name="specialRequests"
-              value={formData.specialRequests}
-              onChange={handleInputChange}
-              placeholder="Any special requirements or preferences..."
-              rows="3"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Payment Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Card Number *
-            </label>
-            <div className="relative">
-              <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                name="cardNumber"
-                required
-                value={formData.cardNumber}
-                onChange={handleInputChange}
-                placeholder="1234 5678 9012 3456"
-                maxLength="19"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cardholder Name *
-            </label>
             <input
-              type="text"
-              name="cardName"
-              required
-              value={formData.cardName}
-              onChange={handleInputChange}
-              placeholder="John Doe"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.phone ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="+91 98765 43210"
             />
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+            )}
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Expiry Date *
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* Date Selection Section */}
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          {type === 'hotel' ? 'Stay Dates' : type === 'flight' ? 'Travel Dates' : 'Tour Date'}
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {type === 'hotel' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Check-in Date *
+                </label>
                 <input
-                  type="text"
-                  name="expiryDate"
-                  required
-                  value={formData.expiryDate}
-                  onChange={handleInputChange}
-                  placeholder="MM/YY"
-                  maxLength="5"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  type="date"
+                  name="checkIn"
+                  value={formData.checkIn}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.checkIn ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.checkIn && (
+                  <p className="mt-1 text-sm text-red-600">{errors.checkIn}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Check-out Date *
+                </label>
+                <input
+                  type="date"
+                  name="checkOut"
+                  value={formData.checkOut}
+                  onChange={handleChange}
+                  min={formData.checkIn || new Date().toISOString().split('T')[0]}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.checkOut ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.checkOut && (
+                  <p className="mt-1 text-sm text-red-600">{errors.checkOut}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {type === 'flight' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Departure Date *
+                </label>
+                <input
+                  type="date"
+                  name="departureDate"
+                  value={formData.departureDate}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.departureDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.departureDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.departureDate}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Return Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  name="returnDate"
+                  value={formData.returnDate}
+                  onChange={handleChange}
+                  min={formData.departureDate || new Date().toISOString().split('T')[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </div>
+            </>
+          )}
 
+          {type === 'tour' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                CVV *
+                Tour Date *
               </label>
               <input
-                type="text"
-                name="cvv"
-                required
-                value={formData.cvv}
-                onChange={handleInputChange}
-                placeholder="123"
-                maxLength="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                type="date"
+                name="departureDate"
+                value={formData.departureDate}
+                onChange={handleChange}
+                min={new Date().toISOString().split('T')[0]}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.departureDate ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {errors.departureDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.departureDate}</p>
+              )}
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <span className="font-semibold">🔒 Secure Payment:</span> Your payment information is encrypted and secure.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Terms & Submit */}
-      <Card>
-        <CardContent>
-          <label className="flex items-start gap-2 mb-4">
+      {/* Number of Guests Section - WITH REAL-TIME PRICING UPDATE */}
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Number of Travelers
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Adults (18+)
+            </label>
             <input
-              type="checkbox"
-              required
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-1"
+              type="number"
+              name="numberOfAdults"
+              value={formData.numberOfAdults}
+              onChange={handleChange}
+              min="1"
+              max="10"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <span className="text-sm text-gray-700">
-              I agree to the terms and conditions and cancellation policy *
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Children (0-17)
+            </label>
+            <input
+              type="number"
+              name="numberOfChildren"
+              value={formData.numberOfChildren}
+              onChange={handleChange}
+              min="0"
+              max="10"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Special Requests Section */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Special Requests (Optional)
+        </label>
+        <textarea
+          name="specialRequests"
+          value={formData.specialRequests}
+          onChange={handleChange}
+          rows="4"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Any special requirements or requests..."
+        />
+      </div>
+
+      {/* Terms and Conditions */}
+      <div>
+        <label className="flex items-start">
+          <input
+            type="checkbox"
+            name="agreeToTerms"
+            checked={formData.agreeToTerms}
+            onChange={handleChange}
+            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <span className="ml-2 text-sm text-gray-700">
+            I agree to the{' '}
+            <a href="/terms" className="text-blue-600 hover:text-blue-700">
+              terms and conditions
+            </a>{' '}
+            and{' '}
+            <a href="/privacy" className="text-blue-600 hover:text-blue-700">
+              privacy policy
+            </a>
+          </span>
+        </label>
+        {errors.agreeToTerms && (
+          <p className="mt-1 text-sm text-red-600">{errors.agreeToTerms}</p>
+        )}
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full md:w-auto"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
             </span>
-          </label>
-
-          <Button
-            type="submit"
-            size="lg"
-            fullWidth
-            loading={bookingMutation.isPending}
-          >
-            {bookingMutation.isPending ? 'Processing Payment...' : 'Confirm Booking'}
-          </Button>
-        </CardContent>
-      </Card>
+          ) : (
+            'Confirm Booking'
+          )}
+        </Button>
+      </div>
     </form>
-  )
-}
+  );
+};
 
-export default BookingForm
+export default BookingForm;

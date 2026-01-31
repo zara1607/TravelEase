@@ -24,7 +24,9 @@ const FlightCard = ({ flight }) => {
   }
 
   const handleBookNow = () => {
-    navigate(`/flights/${flight._id}`)
+    navigate(`/booking/flight/${flight._id || flight.id}`, {
+      state: { item: flight }
+    })
   }
 
   return (

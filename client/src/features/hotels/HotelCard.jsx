@@ -1,3 +1,4 @@
+// src/features/hotels/HotelCard.jsx
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Star, Wifi, Coffee, Dumbbell, Clock, ArrowRight } from 'lucide-react'
@@ -9,9 +10,21 @@ import { CURRENCY } from '../../lib/constants'
 const HotelCard = ({ hotel, isPackage = false }) => {
   const navigate = useNavigate()
 
+  // Ensure price consistency - use the same logic from your updated code
+  const basePrice = hotel.pricePerNight || hotel.price || 0
+
   const handleBookNow = () => {
     const path = isPackage ? `/packages/${hotel._id}` : `/hotels/${hotel._id}`
-    navigate(path)
+    navigate(path, {
+      state: { 
+        item: {
+          ...hotel,
+          // Ensure price consistency across the app
+          basePrice,
+          pricePerNight: basePrice,
+        }
+      }
+    })
   }
 
   const amenityIcons = {
@@ -108,7 +121,7 @@ const HotelCard = ({ hotel, isPackage = false }) => {
                 {isPackage ? 'Package price from' : 'Starting from'}
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                {CURRENCY.symbol}{hotel.price?.toLocaleString() || hotel.pricePerNight?.toLocaleString()}
+                {CURRENCY.symbol}{basePrice.toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {isPackage ? 'per person' : 'per night'}
