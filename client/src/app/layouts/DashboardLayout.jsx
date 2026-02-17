@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plane,
@@ -12,13 +12,19 @@ import {
   ChevronRight,
   Home
 } from 'lucide-react'
-import { useAuth } from '../providers'
+import { useAuth } from '../../hooks/useAuth'
+import MakeMyTripNavbar from '../../components/MakeMyTripNavbar'
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
+
+  // If user is not logged in, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleLogout = () => {
     logout()
@@ -52,51 +58,11 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
-        <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="bg-primary rounded-lg p-2">
-                <Plane className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-gray-900">TravelEase</span>
-            </Link>
-          </div>
-
-          {/* User Menu */}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
-            >
-              <Home className="w-4 h-4" />
-              <span>Home</span>
-            </Link>
-            <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-50">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span className="hidden sm:block font-medium text-gray-900 text-sm">
-                {user?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Navbar from the first version */}
+      <MakeMyTripNavbar />
+      
+      {/* Dashboard Content with Sidebar */}
       <div className="pt-16 flex">
         {/* Sidebar */}
         <AnimatePresence>
