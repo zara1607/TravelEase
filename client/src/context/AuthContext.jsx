@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { loginUser, registerUser } from '../features/auth/auth.api';
 
 export const AuthContext = createContext();
 
@@ -12,105 +13,135 @@ export const AuthProvider = ({ children }) => {
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('travelEaseUser');
-    
-    if (storedUser) {
+    const loadUserFromStorage = () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('token');
+
+        if (storedUser && storedToken) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         clearAuth();
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    loadUserFromStorage();
   }, []);
 
   const clearAuth = () => {
-    localStorage.removeItem('travelEaseToken');
-    localStorage.removeItem('travelEaseUser');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
   const login = async (email, password) => {
     try {
-      // Mock API call - replace with actual API
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email: email,
-        avatar: null
-      };
+      const response = await loginUser({ email, password });
       
-      // Store in localStorage
-      localStorage.setItem('travelEaseUser', JSON.stringify(mockUser));
-      
-      // Update state
-      setUser(mockUser);
-      
-      // Check for stored intent
-      const storedIntent = localStorage.getItem('lastIntent');
-      if (storedIntent) {
-        const intent = JSON.parse(storedIntent);
-        localStorage.removeItem('lastIntent');
-        navigate(intent.path + intent.search);
+      // Check if login was successful
+      if (response?.success && response?.token) {
+        // Store token and user
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+
+        toast.success('Login successful!');
+
+        // Redirect to stored intent or home
+        const storedIntent = localStorage.getItem('lastIntent');
+        if (storedIntent) {
+          try {
+            const intent = JSON.parse(storedIntent);
+            localStorage.removeItem('lastIntent');
+            navigate(intent.path + (intent.search || ''));
+          } catch (e) {
+            navigate('/');
+          }
+        } else {
+          navigate('/');
+        }
+
+        return { success: true, user: response.user };
       } else {
-        navigate('/');
+        // Handle case where response doesn't have expected structure
+        const errorMessage = response?.message || 'Login failed';
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    } catch (error) {
+      // Extract error message from response if available
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      toast.success('Login successful!');
-      return { success: true, user: mockUser };
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
-      return { success: false, error: error.message };
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
   const register = async (userData) => {
     try {
-      // Mock API call - replace with actual API
-      const mockUser = {
-        id: '1',
-        name: userData.name,
-        email: userData.email,
-        avatar: null
-      };
+      const response = await registerUser(userData);
       
-      // Store in localStorage
-      localStorage.setItem('travelEaseUser', JSON.stringify(mockUser));
-      
-      // Update state
-      setUser(mockUser);
-      
-      navigate('/');
-      toast.success('Registration successful! Welcome to TravelEase!');
-      return { success: true, user: mockUser };
+      if (response?.success && response?.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+
+        toast.success('Registration successful! Welcome to TravelEase!');
+        navigate('/');
+        return { success: true, user: response.user };
+      } else {
+        const errorMessage = response?.message || 'Registration failed';
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
+      }
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
-      return { success: false, error: error.message };
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
   const logout = () => {
     clearAuth();
     toast.success('You have been logged out successfully!');
-    
+
     // If on a protected route, redirect to home
-    const isProtectedRoute = location.pathname.startsWith('/dashboard') || 
-                           location.pathname === '/profile' || 
-                           location.pathname === '/bookings' || 
-                           location.pathname === '/wishlist';
-    
+    const protectedPaths = ['/dashboard', '/profile', '/bookings', '/wishlist'];
+    const isProtectedRoute = protectedPaths.some(path => 
+      location.pathname.startsWith(path)
+    );
+
     if (isProtectedRoute) {
       navigate('/');
     }
-    
+
     return { success: true };
   };
 
   const updateUser = (updatedUser) => {
+    if (!user) return;
+    
     const newUser = { ...user, ...updatedUser };
     setUser(newUser);
-    localStorage.setItem('travelEaseUser', JSON.stringify(newUser));
+    localStorage.setItem('user', JSON.stringify(newUser));
     toast.success('Profile updated successfully!');
   };
 
@@ -120,7 +151,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateUser
+    updateUser,
+    isAuthenticated: !!user
   };
 
   return (

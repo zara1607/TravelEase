@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Plane, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { register } = useAuth(); // ✅ Use real register function from context
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '' // Add phone field (optional)
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,21 +67,19 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const newUser = {
+      // ✅ Call the real register function from AuthContext
+      const result = await register({
         name: formData.name,
         email: formData.email,
-        id: Date.now()
-      };
+        password: formData.password,
+        phone: formData.phone || '' // Optional phone
+      });
 
-      const mockToken = 'mock-jwt-token-' + Date.now();
-
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('authToken', mockToken);
-
-      window.location.href = '/';
-
+      if (!result.success) {
+        setError(result.error);
+        setLoading(false);
+      }
+      // If successful, register() in AuthContext will handle navigation
     } catch (err) {
       setError('Registration failed. Please try again.');
       setLoading(false);
@@ -165,6 +166,22 @@ const Register = () => {
                   placeholder="you@example.com"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                Phone Number (Optional)
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                placeholder="+1 234 567 8900"
+              />
             </div>
 
             <div>

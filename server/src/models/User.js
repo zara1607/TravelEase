@@ -1,74 +1,132 @@
-import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs'
+// server/src/models/User.js
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please provide a name'],
-    trim: true,
-    maxlength: [50, 'Name cannot be more than 50 characters']
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Name is required'],
+      trim: true,
+      minlength: [2, 'Name must be at least 2 characters'],
+      maxlength: [50, 'Name cannot exceed 50 characters'],
+    },
+
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        'Please provide a valid email address',
+      ],
+    },
+
+    password: {
+      type: String,
+      required: [true, 'Password is required'],
+      minlength: [6, 'Password must be at least 6 characters'],
+      select: false, // excluded by default in find/select queries
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    city: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    state: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    country: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    zipCode: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    photo: {
+      type: String,
+      default: '', // can be URL to profile picture
+    },
+
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  email: {
-    type: String,
-    required: [true, 'Please provide an email'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email'
-    ]
-  },
-  password: {
-    type: String,
-    required: [true, 'Please provide a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false
-  },
-  phone: {
-    type: String,
-    trim: true
-  },
-  address: {
-    type: String,
-    trim: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+  {
+    timestamps: true, // automatically adds createdAt & updatedAt
   }
-}, {
-  timestamps: true
-})
+);
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
+// ────────────────────────────────────────────────
+// Indexes for better query performance
+// ────────────────────────────────────────────────
+userSchema.index({ email: 1 }); // fast email lookup
+
+// ────────────────────────────────────────────────
+// Pre-save middleware: hash password only when modified
+// ────────────────────────────────────────────────
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    return next()
+    return next();
   }
-  
-  const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password, salt)
-  next()
-})
 
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password)
-}
+  try {
+    const salt = await bcrypt.genSalt(12); // 12 is a good balance in 2025
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
-// Remove password from JSON response
-userSchema.methods.toJSON = function() {
-  const user = this.toObject()
-  delete user.password
-  return user
-}
+// ────────────────────────────────────────────────
+// Instance method: compare password
+// ────────────────────────────────────────────────
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-const User = mongoose.model('User', userSchema)
+// ────────────────────────────────────────────────
+// toJSON: automatically remove password from responses
+// ────────────────────────────────────────────────
+userSchema.methods.toJSON = function () {
+  const userObject = this.toObject();
+  delete userObject.password;
+  return userObject;
+};
 
-export default User
+// Create and export the model
+const User = mongoose.model('User', userSchema);
+
+export default User;

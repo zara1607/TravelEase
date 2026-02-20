@@ -5,7 +5,7 @@ import {
   Plane, Building2, Package, Train, Bus, Car, 
   Heart, ShoppingBag
 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 
 const MakeMyTripNavbar = () => {
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ const MakeMyTripNavbar = () => {
   const handleWishlistClick = () => {
     if (!isAuthenticated) {
       sessionStorage.setItem('redirectAfterLogin', '/wishlist');
-      navigate('/login'); // FIXED: Changed from '/auth/login' to '/login'
+      navigate('/login');
     } else {
       navigate('/wishlist');
     }
@@ -107,10 +107,10 @@ const MakeMyTripNavbar = () => {
 
   const handleBookingsClick = () => {
     if (!isAuthenticated) {
-      sessionStorage.setItem('redirectAfterLogin', '/dashboard/bookings');
-      navigate('/login'); // FIXED: Changed from '/auth/login' to '/login'
+      sessionStorage.setItem('redirectAfterLogin', '/bookings');
+      navigate('/login');
     } else {
-      navigate('/dashboard/bookings');
+      navigate('/bookings');
     }
   };
 
@@ -325,9 +325,10 @@ const MakeMyTripNavbar = () => {
                         </div>
                       </div>
                       
+                      {/* ✅ FIXED: My Profile - Correct path */}
                       <button
                         onClick={() => {
-                          navigate('/dashboard/profile');
+                          navigate('/profile');
                           setShowUserMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -335,9 +336,10 @@ const MakeMyTripNavbar = () => {
                         My Profile
                       </button>
                       
+                      {/* ✅ FIXED: My Bookings - Correct path */}
                       <button
                         onClick={() => {
-                          handleBookingsClick();
+                          navigate('/bookings');
                           setShowUserMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -345,9 +347,10 @@ const MakeMyTripNavbar = () => {
                         My Bookings
                       </button>
                       
+                      {/* ✅ Wishlist - Correct path */}
                       <button 
                         onClick={() => {
-                          handleWishlistClick();
+                          navigate('/wishlist');
                           setShowUserMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -355,9 +358,10 @@ const MakeMyTripNavbar = () => {
                         Wishlist
                       </button>
                       
+                      {/* ✅ FIXED: Settings - Correct path */}
                       <button
                         onClick={() => {
-                          navigate('/dashboard');
+                          navigate('/settings');
                           setShowUserMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -378,7 +382,7 @@ const MakeMyTripNavbar = () => {
                 </>
               ) : (
                 <button
-                  onClick={() => navigate('/login')} // FIXED: Changed from '/auth/login' to '/login'
+                  onClick={() => navigate('/login')}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Login

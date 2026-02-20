@@ -1,439 +1,662 @@
-import React from 'react';
-import DynamicSearchPanel from '../components/DynamicSearchPanel';  // ✅ REPLACED ModernTabSearchBar with DynamicSearchPanel
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
-  Sparkles, TrendingUp, Shield, Award, MapPin, 
-  Star, Users, CheckCircle, ArrowRight, Clock,
-  Plane, Building2, Package, Heart
+  Search, MapPin, Star, Heart, ChevronRight, 
+  Plane, Hotel, Package, Train, Bus, Car,
+  Calendar, Users, Clock, Award, Shield,
+  Sparkles, TrendingUp, Camera, Coffee,
+  Sun, Umbrella, Mountain, Compass
 } from 'lucide-react';
+import { useBooking } from '../hooks/useBooking';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import Badge from '../ui/Badge';
 
-const ProfessionalHome = () => {
-  
-  // Popular Destinations
-  const popularDestinations = [
+const Home = () => {
+  const navigate = useNavigate();
+  const { handleBooking } = useBooking();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDestination, setSelectedDestination] = useState('');
+
+  // Popular destinations
+  const destinations = [
     {
-      id: 1,
-      name: 'Dubai, UAE',
-      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop',
-      packages: '150+ Packages',
-      price: 'From ₹35,999',
-      rating: 4.8,
-      badge: 'Trending'
+      id: 'goa',
+      name: 'Goa',
+      country: 'India',
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1174&q=80',
+      price: 12999,
+      rating: 4.5,
+      type: 'package',
+      packageDetails: {
+        title: 'Magical Goa Beach Escape',
+        days: 4,
+        nights: 3,
+        highlights: ['Beach Resorts', 'Water Sports', 'Sunset Cruise']
+      }
     },
     {
-      id: 2,
-      name: 'Maldives',
-      image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&h=600&fit=crop',
-      packages: '80+ Packages',
-      price: 'From ₹45,999',
-      rating: 4.9,
-      badge: 'Luxury'
-    },
-    {
-      id: 3,
-      name: 'Bali, Indonesia',
-      image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=600&fit=crop',
-      packages: '120+ Packages',
-      price: 'From ₹28,999',
+      id: 'kerala',
+      name: 'Kerala',
+      country: 'India',
+      image: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80',
+      price: 18999,
       rating: 4.7,
-      badge: 'Popular'
+      type: 'package',
+      packageDetails: {
+        title: 'Kerala Backwaters & Ayurveda',
+        days: 5,
+        nights: 4,
+        highlights: ['Houseboat Stay', 'Ayurveda', 'Kathakali']
+      }
     },
     {
-      id: 4,
-      name: 'Paris, France',
-      image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800&h=600&fit=crop',
-      packages: '200+ Packages',
-      price: 'From ₹55,999',
+      id: 'manali',
+      name: 'Manali',
+      country: 'India',
+      image: 'https://images.unsplash.com/photo-1626624340240-a10d0a5ae4e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+      price: 15999,
+      rating: 4.6,
+      type: 'package',
+      packageDetails: {
+        title: 'Manali Adventure Trek',
+        days: 6,
+        nights: 5,
+        highlights: ['River Rafting', 'Paragliding', 'Camping']
+      }
+    },
+    {
+      id: 'udaipur',
+      name: 'Udaipur',
+      country: 'India',
+      image: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+      price: 13499,
+      rating: 4.8,
+      type: 'package',
+      packageDetails: {
+        title: 'Udaipur Royal Heritage',
+        days: 4,
+        nights: 3,
+        highlights: ['Palace Visit', 'Lake Cruise', 'Folk Dance']
+      }
+    }
+  ];
+
+  // Featured packages
+  const featuredPackages = [
+    {
+      id: 'p1',
+      title: 'Magical Goa Beach Escape',
+      location: 'Goa, India',
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1174&q=80',
+      price: 12999,
+      originalPrice: 15000,
+      rating: 4.5,
+      reviews: 128,
+      days: 4,
+      nights: 3,
+      type: 'package',
+      highlights: ['Private Beach', 'Water Sports', 'Sunset Cruise']
+    },
+    {
+      id: 'p2',
+      title: 'Kerala Backwaters Retreat',
+      location: 'Kerala, India',
+      image: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80',
+      price: 18999,
+      originalPrice: 22000,
+      rating: 4.7,
+      reviews: 95,
+      days: 5,
+      nights: 4,
+      type: 'package',
+      highlights: ['Houseboat', 'Ayurveda', 'Village Tour']
+    },
+    {
+      id: 'p3',
+      title: 'Manali Adventure Trek',
+      location: 'Manali, India',
+      image: 'https://images.unsplash.com/photo-1626624340240-a10d0a5ae4e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+      price: 15999,
+      originalPrice: 18000,
+      rating: 4.6,
+      reviews: 156,
+      days: 6,
+      nights: 5,
+      type: 'package',
+      highlights: ['Trekking', 'Camping', 'River Rafting']
+    }
+  ];
+
+  // Flight deals
+  const flightDeals = [
+    {
+      id: 'f1',
+      from: 'Mumbai',
+      to: 'Delhi',
+      airline: 'IndiGo',
+      price: 2999,
+      departureDate: '2024-03-15',
+      returnDate: '2024-03-20',
+      type: 'flight'
+    },
+    {
+      id: 'f2',
+      from: 'Delhi',
+      to: 'Goa',
+      airline: 'SpiceJet',
+      price: 3999,
+      departureDate: '2024-03-18',
+      returnDate: '2024-03-23',
+      type: 'flight'
+    },
+    {
+      id: 'f3',
+      from: 'Bangalore',
+      to: 'Kerala',
+      airline: 'Air India',
+      price: 3499,
+      departureDate: '2024-03-20',
+      returnDate: '2024-03-25',
+      type: 'flight'
+    }
+  ];
+
+  // Hotel deals
+  const hotelDeals = [
+    {
+      id: 'h1',
+      name: 'Taj Mahal Palace',
+      location: 'Mumbai',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+      price: 8999,
       rating: 4.9,
-      badge: 'Romantic'
+      type: 'hotel',
+      amenities: ['Pool', 'Spa', 'Restaurant']
+    },
+    {
+      id: 'h2',
+      name: 'The Leela Palace',
+      location: 'Goa',
+      image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1025&q=80',
+      price: 12999,
+      rating: 4.8,
+      type: 'hotel',
+      amenities: ['Beach Access', 'Pool', 'Spa']
+    },
+    {
+      id: 'h3',
+      name: 'Oberoi Udaivilas',
+      location: 'Udaipur',
+      image: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+      price: 15999,
+      rating: 4.9,
+      type: 'hotel',
+      amenities: ['Lake View', 'Pool', 'Heritage']
     }
   ];
 
-  // Why Choose Us
-  const features = [
-    {
-      icon: Shield,
-      title: '100% Secure Booking',
-      description: 'Your data is protected with bank-level encryption',
-      color: 'bg-green-50 text-green-600'
-    },
-    {
-      icon: Award,
-      title: 'Best Price Guarantee',
-      description: 'Found a better price? We\'ll match it or refund the difference',
-      color: 'bg-blue-50 text-blue-600'
-    },
-    {
-      icon: Users,
-      title: '2M+ Happy Travelers',
-      description: 'Join millions of satisfied customers worldwide',
-      color: 'bg-orange-50 text-orange-600'
-    },
-    {
-      icon: Clock,
-      title: '24/7 Customer Support',
-      description: 'Our team is always here to help you anytime',
-      color: 'bg-purple-50 text-purple-600'
-    }
+  // Services
+  const services = [
+    { id: 'flights', name: 'Flights', icon: Plane, color: 'blue', path: '/flights' },
+    { id: 'hotels', name: 'Hotels', icon: Hotel, color: 'green', path: '/hotels' },
+    { id: 'packages', name: 'Packages', icon: Package, color: 'purple', path: '/packages' },
+    { id: 'trains', name: 'Trains', icon: Train, color: 'orange', path: '/trains' },
+    { id: 'buses', name: 'Buses', icon: Bus, color: 'red', path: '/buses' },
+    { id: 'cabs', name: 'Cabs', icon: Car, color: 'indigo', path: '/cabs' }
   ];
 
-  // Deals & Offers
-  const deals = [
-    {
-      title: 'Summer Special',
-      discount: 'Up to 40% OFF',
-      description: 'On international flights',
-      color: 'from-orange-500 to-pink-500',
-      icon: Plane
-    },
-    {
-      title: 'Hotel Bonanza',
-      discount: 'Flat 30% OFF',
-      description: 'On luxury stays',
-      color: 'from-blue-500 to-cyan-500',
-      icon: Building2
-    },
-    {
-      title: 'Package Deals',
-      discount: 'Save ₹10,000',
-      description: 'On holiday packages',
-      color: 'from-purple-500 to-pink-500',
-      icon: Package
-    }
-  ];
+  // Handle package booking
+  const handlePackageBooking = (pkg) => {
+    handleBooking({
+      _id: pkg.id,
+      title: pkg.title || pkg.name,
+      description: `Explore beautiful ${pkg.location || pkg.name}`,
+      images: [{ url: pkg.image }],
+      destination: {
+        city: pkg.location?.split(',')[0] || pkg.name,
+        country: pkg.location?.split(',')[1]?.trim() || 'India'
+      },
+      duration: {
+        days: pkg.days || 4,
+        nights: pkg.nights || 3
+      },
+      pricing: {
+        discountedPrice: pkg.price,
+        originalPrice: pkg.originalPrice || pkg.price,
+        discount: pkg.originalPrice ? Math.round(((pkg.originalPrice - pkg.price) / pkg.originalPrice) * 100) : 0
+      },
+      rating: {
+        average: pkg.rating || 4.5,
+        count: pkg.reviews || 100
+      },
+      highlights: pkg.highlights || ['Guided Tours', 'Hotel Stay', 'Meals'],
+      inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Transfer']
+    }, 'package');
+  };
 
-  // Testimonials
-  const testimonials = [
-    {
-      name: 'Priya Sharma',
-      location: 'Mumbai, India',
-      rating: 5,
-      text: 'Absolutely amazing experience! Booked my Bali trip and everything was seamless. Highly recommend TravelEase!',
-      avatar: 'https://ui-avatars.com/api/?name=Priya+Sharma&background=3b82f6&color=fff'
-    },
-    {
-      name: 'Rahul Kumar',
-      location: 'Delhi, India',
-      rating: 5,
-      text: 'Best prices and excellent customer service. Saved a lot on my Dubai vacation. Will definitely use again!',
-      avatar: 'https://ui-avatars.com/api/?name=Rahul+Kumar&background=10b981&color=fff'
-    },
-    {
-      name: 'Sneha Patel',
-      location: 'Bangalore, India',
-      rating: 5,
-      text: 'Professional service from start to finish. The team helped me plan my dream European tour perfectly!',
-      avatar: 'https://ui-avatars.com/api/?name=Sneha+Patel&background=f59e0b&color=fff'
-    }
-  ];
+  // Handle flight booking
+  const handleFlightBooking = (flight) => {
+    handleBooking({
+      _id: flight.id,
+      title: `${flight.from} to ${flight.to}`,
+      flightDetails: flight,
+      pricing: {
+        discountedPrice: flight.price,
+        originalPrice: flight.price
+      },
+      from: flight.from,
+      to: flight.to,
+      airline: flight.airline,
+      departureDate: flight.departureDate,
+      returnDate: flight.returnDate
+    }, 'flight');
+  };
+
+  // Handle hotel booking
+  const handleHotelBooking = (hotel) => {
+    handleBooking({
+      _id: hotel.id,
+      name: hotel.name,
+      title: hotel.name,
+      description: `Luxury stay at ${hotel.name}`,
+      images: [{ url: hotel.image }],
+      location: hotel.location,
+      pricing: {
+        discountedPrice: hotel.price,
+        originalPrice: hotel.price
+      },
+      rating: {
+        average: hotel.rating,
+        count: hotel.reviews || 200
+      },
+      amenities: hotel.amenities
+    }, 'hotel');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      {/* Hero Section with Search */}
-      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 pt-12 pb-8">
-          {/* Hero Text */}
-          <div className="text-center mb-8">
-            <div className="inline-block mb-4">
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold">
-                <Sparkles className="w-4 h-4" />
-                Your Journey Starts Here
-              </span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
-              Welcome to
-              <span className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent mt-2">
-                TravelEase
-              </span>
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        ></div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">
+              Your Journey Begins Here
             </h1>
-
-            <p className="text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto mb-2">
-              Book flights, hotels, and holiday packages at the best prices.
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Discover amazing destinations, book flights, hotels, and curated packages
             </p>
-            <p className="text-lg text-blue-200 max-w-2xl mx-auto">
-              Your journey begins here.
-            </p>
-          </div>
-        </div>
 
-        {/* Wave Divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="rgb(249, 250, 251)"/>
-          </svg>
-        </div>
-      </div>
-
-      {/* ✅ Search Bar Section - Using DynamicSearchPanel instead */}
-      <div className="-mt-12 relative z-10">
-        <DynamicSearchPanel />
-      </div>
-
-      {/* Trust Badges */}
-      <div className="bg-white py-8 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div key={index} className="text-center group">
-                  <div className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-8 h-8" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-1 text-sm md:text-base">{feature.title}</h3>
-                  <p className="text-xs md:text-sm text-gray-600">{feature.description}</p>
+            {/* Search Bar */}
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
+              <div className="flex flex-col md:flex-row">
+                <div className="flex-1 flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
+                  <Search className="w-5 h-5 text-gray-400 mr-2" />
+                  <input
+                    type="text"
+                    placeholder="Where do you want to go?"
+                    className="w-full py-4 text-gray-900 placeholder-gray-400 focus:outline-none"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
+                  <Calendar className="w-5 h-5 text-gray-400 mr-2" />
+                  <input
+                    type="text"
+                    placeholder="Check-in - Check-out"
+                    className="w-full py-4 text-gray-900 placeholder-gray-400 focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center px-4">
+                  <Users className="w-5 h-5 text-gray-400 mr-2" />
+                  <select className="w-full py-4 text-gray-900 focus:outline-none bg-transparent">
+                    <option>2 Travelers</option>
+                    <option>3 Travelers</option>
+                    <option>4 Travelers</option>
+                    <option>5+ Travelers</option>
+                  </select>
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-b-xl flex justify-end">
+                <Button variant="primary" className="px-8">
+                  <Search className="w-5 h-5 mr-2" />
+                  Search
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Deals & Offers */}
-      <div className="py-16 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              🔥 Exclusive Deals & Offers
-            </h2>
-            <p className="text-lg text-gray-600">
-              Limited time offers you don't want to miss!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {deals.map((deal, index) => {
-              const Icon = deal.icon;
-              return (
-                <div
-                  key={index}
-                  className={`relative bg-gradient-to-br ${deal.color} rounded-2xl p-8 text-white overflow-hidden group hover:shadow-2xl transition-all duration-300 transform hover:scale-105`}
-                >
-                  {/* Background Icon */}
-                  <div className="absolute -right-4 -bottom-4 opacity-20">
-                    <Icon className="w-32 h-32" />
-                  </div>
-
-                  <div className="relative z-10">
-                    <div className="inline-block p-3 bg-white/20 backdrop-blur-sm rounded-xl mb-4">
-                      <Icon className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">{deal.title}</h3>
-                    <div className="text-3xl font-black mb-2">{deal.discount}</div>
-                    <p className="text-white/90 mb-6">{deal.description}</p>
-                    <button className="bg-white text-blue-600 px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition-colors inline-flex items-center gap-2">
-                      Explore Now
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
+      {/* Services Section */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          Our Services
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {services.map((service) => {
+            const Icon = service.icon;
+            return (
+              <motion.div
+                key={service.id}
+                whileHover={{ y: -5 }}
+                className="bg-white rounded-xl shadow-sm p-6 text-center cursor-pointer hover:shadow-lg transition-all"
+                onClick={() => navigate(service.path)}
+              >
+                <div className={`inline-flex p-3 bg-${service.color}-100 rounded-xl mb-3`}>
+                  <Icon className={`w-6 h-6 text-${service.color}-600`} />
                 </div>
-              );
-            })}
-          </div>
+                <h3 className="font-semibold text-gray-900">{service.name}</h3>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
       {/* Popular Destinations */}
-      <div className="py-16 bg-white">
+      <div className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                🌍 Popular Destinations
-              </h2>
-              <p className="text-lg text-gray-600">
-                Discover amazing places around the world
-              </p>
+              <h2 className="text-3xl font-bold text-gray-900">Popular Destinations</h2>
+              <p className="text-gray-600 mt-2">Most loved places by our travelers</p>
             </div>
-            <button className="hidden md:flex items-center gap-2 text-blue-600 font-semibold hover:gap-3 transition-all">
+            <Button variant="outline" onClick={() => navigate('/packages')}>
               View All
-              <ArrowRight className="w-5 h-5" />
-            </button>
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularDestinations.map((destination) => (
-              <div
-                key={destination.id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+            {destinations.map((dest) => (
+              <motion.div
+                key={dest.id}
+                whileHover={{ y: -5 }}
+                className="group cursor-pointer"
+                onClick={() => handlePackageBooking(dest)}
               >
-                <div className="relative h-56 overflow-hidden">
+                <Card className="overflow-hidden">
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={dest.image}
+                      alt={dest.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        <span className="text-xs font-semibold">{dest.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-gray-900">{dest.name}</h3>
+                      <span className="text-xs text-gray-500">{dest.country}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                      <MapPin className="w-3 h-3" />
+                      <span>Popular Destination</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs text-gray-500">Starting from</span>
+                        <p className="text-lg font-bold text-blue-600">₹{dest.price}</p>
+                      </div>
+                      <Badge variant="primary" size="sm">Book Now</Badge>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Packages */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Featured Packages</h2>
+            <p className="text-gray-600 mt-2">Handpicked just for you</p>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/packages')}>
+            View All Packages
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featuredPackages.map((pkg) => (
+            <motion.div
+              key={pkg.id}
+              whileHover={{ y: -5 }}
+              className="group cursor-pointer"
+              onClick={() => handlePackageBooking(pkg)}
+            >
+              <Card className="overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img
-                    src={destination.image}
-                    alt={destination.name}
+                    src={pkg.image}
+                    alt={pkg.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                  
-                  {/* Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-blue-600 text-xs font-bold rounded-full">
-                      {destination.badge}
-                    </span>
-                  </div>
-
-                  {/* Wishlist */}
-                  <button className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors">
-                    <Heart className="w-5 h-5 text-gray-700" />
-                  </button>
-
-                  {/* Destination Name */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white text-xl font-bold mb-1">{destination.name}</h3>
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Star className="w-4 h-4 fill-current" />
-                      <span className="text-sm font-semibold">{destination.rating}</span>
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs font-semibold">{pkg.rating}</span>
                     </div>
                   </div>
+                  {pkg.originalPrice && (
+                    <div className="absolute top-3 left-3">
+                      <Badge variant="primary" className="bg-orange-500 text-white border-0">
+                        {Math.round(((pkg.originalPrice - pkg.price) / pkg.originalPrice) * 100)}% OFF
+                      </Badge>
+                    </div>
+                  )}
                 </div>
-
                 <div className="p-4">
-                  <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900 mb-1">{pkg.title}</h3>
+                  <p className="text-sm text-gray-600 mb-3">{pkg.location}</p>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">{pkg.days}D/{pkg.nights}N</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {pkg.highlights.slice(0, 2).map((h, i) => (
+                      <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700">
+                        {h}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{destination.packages}</p>
-                      <p className="text-lg font-bold text-gray-900">{destination.price}</p>
+                      {pkg.originalPrice && (
+                        <span className="text-xs text-gray-500 line-through">₹{pkg.originalPrice}</span>
+                      )}
+                      <p className="text-xl font-bold text-blue-600">₹{pkg.price}</p>
                     </div>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition-colors text-sm">
-                      Explore
-                    </button>
+                    <Button variant="primary" size="sm">Book Now</Button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </div>
 
-      {/* Testimonials */}
-      <div className="py-16 bg-gradient-to-b from-gray-50 to-white">
+      {/* Flight Deals */}
+      <div className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              💬 What Our Travelers Say
-            </h2>
-            <p className="text-lg text-gray-600">
-              Real experiences from real travelers
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Flight Deals</h2>
+              <p className="text-gray-600 mt-2">Best prices on popular routes</p>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/flights')}>
+              View All Flights
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {flightDeals.map((flight) => (
+              <motion.div
+                key={flight.id}
+                whileHover={{ y: -5 }}
+                className="bg-gray-50 rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all"
+                onClick={() => handleFlightBooking(flight)}
               >
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <Plane className="w-8 h-8 text-blue-600" />
+                  <Badge variant="success">{flight.airline}</Badge>
                 </div>
-
-                <p className="text-gray-700 mb-6 italic">
-                  "{testimonial.text}"
-                </p>
-
-                <div className="flex items-center gap-3">
-                  <img
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full"
-                  />
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
-                    <p className="text-sm text-gray-600">{testimonial.location}</p>
+                    <p className="text-sm text-gray-500">From</p>
+                    <p className="font-bold text-gray-900">{flight.from}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">To</p>
+                    <p className="font-bold text-gray-900">{flight.to}</p>
                   </div>
                 </div>
-              </div>
+                <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                  <span>{flight.departureDate}</span>
+                  <span>{flight.returnDate}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-gray-500">Starting from</span>
+                    <p className="text-2xl font-bold text-blue-600">₹{flight.price}</p>
+                  </div>
+                  <Button variant="primary" size="sm">Book</Button>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-16 bg-gradient-to-br from-blue-600 to-cyan-600">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to Start Your Adventure?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join 2 million+ happy travelers and book your dream vacation today!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-colors inline-flex items-center justify-center gap-2">
-              <Plane className="w-6 h-6" />
-              Book Flights
-            </button>
-            <button className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2">
-              <Package className="w-6 h-6" />
-              View Packages
-            </button>
+      {/* Hotel Deals */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Hotel Deals</h2>
+            <p className="text-gray-600 mt-2">Luxury stays at great prices</p>
           </div>
+          <Button variant="outline" onClick={() => navigate('/hotels')}>
+            View All Hotels
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {hotelDeals.map((hotel) => (
+            <motion.div
+              key={hotel.id}
+              whileHover={{ y: -5 }}
+              className="group cursor-pointer"
+              onClick={() => handleHotelBooking(hotel)}
+            >
+              <Card className="overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={hotel.image}
+                    alt={hotel.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs font-semibold">{hotel.rating}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-gray-900 mb-1">{hotel.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3">{hotel.location}</p>
+                  
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {hotel.amenities.map((a, i) => (
+                      <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700">
+                        {a}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-gray-500">Per night</span>
+                      <p className="text-xl font-bold text-blue-600">₹{hotel.price}</p>
+                    </div>
+                    <Button variant="primary" size="sm">Book Now</Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      {/* Why Choose Us */}
+      <div className="bg-blue-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-2xl font-bold mb-4">TravelEase</h3>
-              <p className="text-gray-400 mb-4">
-                Your trusted travel partner for unforgettable journeys.
-              </p>
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-sm">Verified & Secure</span>
-                </div>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose TravelEase</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-white/20 rounded-full mb-4">
+                <Award className="w-8 h-8" />
               </div>
+              <h3 className="text-xl font-bold mb-2">Best Price Guarantee</h3>
+              <p className="text-blue-100">We match and beat any price</p>
             </div>
-
-            <div>
-              <h4 className="font-bold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Flights</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Hotels</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Packages</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Deals</a></li>
-              </ul>
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-white/20 rounded-full mb-4">
+                <Shield className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Safe & Secure</h3>
+              <p className="text-blue-100">Your data is always protected</p>
             </div>
-
-            <div>
-              <h4 className="font-bold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms & Conditions</a></li>
-              </ul>
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-white/20 rounded-full mb-4">
+                <Clock className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">24/7 Support</h3>
+              <p className="text-blue-100">We're here to help anytime</p>
             </div>
-
-            <div>
-              <h4 className="font-bold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>📧 support@travelease.com</li>
-                <li>📞 +91 1800-XXX-XXXX</li>
-                <li>⏰ 24/7 Customer Support</li>
-              </ul>
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-white/20 rounded-full mb-4">
+                <Sparkles className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Curated Experiences</h3>
+              <p className="text-blue-100">Handpicked just for you</p>
             </div>
-          </div>
-
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2026 TravelEase. All rights reserved. Made with ❤️ in India</p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };
 
-export default ProfessionalHome;
+export default Home;

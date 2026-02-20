@@ -308,105 +308,116 @@ const HotelsDashboard = () => {
 
         {/* Hotels Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredHotels.map((hotel, index) => (
-            <motion.div
-              key={hotel.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="group"
-            >
-              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-2 hover:border-blue-200">
-                {/* Image */}
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={hotel.image}
-                    alt={hotel.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold text-gray-900">{hotel.rating}</span>
-                      <span className="text-xs text-gray-500">({hotel.reviews})</span>
+          {filteredHotels.map((hotel, index) => {
+            // Safely get room count
+            const roomCount = hotel.rooms 
+              ? (typeof hotel.rooms === 'object' 
+                ? (hotel.rooms.available || hotel.rooms.total || 0)
+                : hotel.rooms)
+              : 0;
+
+            return (
+              <motion.div
+                key={hotel.id || index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="group"
+              >
+                <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-2 hover:border-blue-200">
+                  {/* Image */}
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={hotel.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80'}
+                      alt={hotel.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold text-gray-900">{hotel.rating || 4.5}</span>
+                        <span className="text-xs text-gray-500">({hotel.reviews || 100})</span>
+                      </div>
+                    </div>
+                    <div className="absolute top-4 left-4">
+                      <Badge variant="primary" className="bg-blue-600 text-white border-0">
+                        {hotel.propertyType || 'Hotel'}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="absolute top-4 left-4">
-                    <Badge variant="primary" className="bg-blue-600 text-white border-0">
-                      {hotel.propertyType || 'Hotel'}
-                    </Badge>
-                  </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {hotel.name}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-gray-500 mb-3">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm truncate">{hotel.location}</span>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {hotel.description}
-                  </p>
-
-                  {/* Amenities */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {hotel.amenities?.slice(0, 4).map((amenity, i) => (
-                      <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700 border-blue-100">
-                        {amenityIcons[amenity] || <Sparkles className="w-3 h-3 mr-1" />}
-                        <span className="text-xs">{amenity}</span>
-                      </Badge>
-                    ))}
-                    {hotel.amenities?.length > 4 && (
-                      <Badge variant="secondary" size="sm" className="bg-gray-100">
-                        +{hotel.amenities.length - 4} more
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Check-in/out */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                    <span>Check-in: {hotel.checkIn || '14:00'}</span>
-                    <span>Check-out: {hotel.checkOut || '11:00'}</span>
-                  </div>
-
-                  {/* Price & Book */}
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">Starting from</p>
-                      <p className="text-3xl font-bold text-blue-600">
-                        ₹{hotel.price?.toLocaleString('en-IN')}
-                      </p>
-                      <p className="text-xs text-gray-500">per night</p>
+                  {/* Content */}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {hotel.name}
+                      </h3>
                     </div>
-                    <Button
-                      onClick={() => handleBookNow(hotel)}
-                      variant="primary"
-                      size="sm"
-                      className="group"
-                    >
-                      Book Now
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </div>
 
-                  {/* Rooms Available */}
-                  <div className="flex items-center gap-1 mt-4 pt-3 border-t border-gray-100">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-600">{hotel.rooms} rooms available</span>
-                    <Shield className="w-4 h-4 text-green-500 ml-auto" />
-                    <span className="text-xs text-green-600">Free cancellation</span>
+                    <div className="flex items-center gap-1 text-gray-500 mb-3">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm truncate">{hotel.location}</span>
+                    </div>
+
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {hotel.description}
+                    </p>
+
+                    {/* Amenities */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {hotel.amenities?.slice(0, 4).map((amenity, i) => (
+                        <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700 border-blue-100">
+                          {amenityIcons[amenity] || <Sparkles className="w-3 h-3 mr-1" />}
+                          <span className="text-xs">{amenity}</span>
+                        </Badge>
+                      ))}
+                      {hotel.amenities?.length > 4 && (
+                        <Badge variant="secondary" size="sm" className="bg-gray-100">
+                          +{hotel.amenities.length - 4} more
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Check-in/out */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <span>Check-in: {hotel.checkIn || '14:00'}</span>
+                      <span>Check-out: {hotel.checkOut || '11:00'}</span>
+                    </div>
+
+                    {/* Price & Book */}
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">Starting from</p>
+                        <p className="text-3xl font-bold text-blue-600">
+                          ₹{hotel.price?.toLocaleString('en-IN') || '5,000'}
+                        </p>
+                        <p className="text-xs text-gray-500">per night</p>
+                      </div>
+                      <Button
+                        onClick={() => handleBookNow(hotel)}
+                        variant="primary"
+                        size="sm"
+                        className="group"
+                      >
+                        Book Now
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+
+                    {/* Rooms Available - FIXED */}
+                    <div className="flex items-center gap-1 mt-4 pt-3 border-t border-gray-100">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs text-gray-600">
+                        {roomCount} rooms available
+                      </span>
+                      <Shield className="w-4 h-4 text-green-500 ml-auto" />
+                      <span className="text-xs text-green-600">Free cancellation</span>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* No Results */}

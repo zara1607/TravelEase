@@ -1,23 +1,228 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Search, MapPin, Calendar, Users, Star, Heart, 
   TrendingUp, Award, Shield, ChevronRight, Filter,
-  X, Check, Clock, Sparkles, Tag, Phone
+  X, Check, Clock, Sparkles, Tag, Phone, Package,
+  Plane, Hotel, Car, Sun, Umbrella, Mountain, 
+  Compass, Coffee, Gift, Download, Globe, Camera
 } from 'lucide-react';
 import axios from 'axios';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 
 // Fix: Define API_URL directly instead of using process.env
 const API_URL = 'http://localhost:5000/api';
+
+// Sample packages for display
+const SAMPLE_PACKAGES = [
+  {
+    _id: 'sample1',
+    packageId: 'sample1',
+    title: 'Magical Goa Beach Escape',
+    category: 'beach',
+    description: 'Enjoy the sun, sand and sea at Goa\'s best beaches with luxury accommodation and water activities.',
+    destination: {
+      city: 'Goa',
+      country: 'India'
+    },
+    duration: {
+      days: 4,
+      nights: 3
+    },
+    pricing: {
+      originalPrice: 15000,
+      discountedPrice: 12999,
+      discount: 13
+    },
+    rating: {
+      average: 4.5,
+      count: 128
+    },
+    highlights: ['Private Beach Access', 'Water Sports', 'Sunset Cruise'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Transfer'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1174&q=80'
+    }],
+    bestSeason: 'Oct-Mar',
+    reviews: 128,
+    isSample: true
+  },
+  {
+    _id: 'sample2',
+    packageId: 'sample2',
+    title: 'Kerala Backwaters & Ayurveda',
+    category: 'luxury',
+    description: 'Experience the serene backwaters of Kerala with houseboat stay and authentic Ayurvedic treatments.',
+    destination: {
+      city: 'Kerala',
+      country: 'India'
+    },
+    duration: {
+      days: 5,
+      nights: 4
+    },
+    pricing: {
+      originalPrice: 22000,
+      discountedPrice: 18999,
+      discount: 14
+    },
+    rating: {
+      average: 4.7,
+      count: 95
+    },
+    highlights: ['Houseboat Stay', 'Ayurvedic Massage', 'Kathakali Performance'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Ayurveda'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80'
+    }],
+    bestSeason: 'Sep-Mar',
+    reviews: 95,
+    isSample: true
+  },
+  {
+    _id: 'sample3',
+    packageId: 'sample3',
+    title: 'Manali Adventure Trek',
+    category: 'adventure',
+    description: 'Trek through the beautiful Himalayas, river rafting, paragliding and camping under the stars.',
+    destination: {
+      city: 'Manali',
+      country: 'India'
+    },
+    duration: {
+      days: 6,
+      nights: 5
+    },
+    pricing: {
+      originalPrice: 18000,
+      discountedPrice: 15999,
+      discount: 11
+    },
+    rating: {
+      average: 4.6,
+      count: 156
+    },
+    highlights: ['River Rafting', 'Paragliding', 'Camping', 'Trekking'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Activities', 'Guide'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1626624340240-a10d0a5ae4e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80'
+    }],
+    bestSeason: 'Apr-Jun',
+    reviews: 156,
+    isSample: true
+  },
+  {
+    _id: 'sample4',
+    packageId: 'sample4',
+    title: 'Udaipur Royal Heritage',
+    category: 'cultural',
+    description: 'Explore the city of lakes, majestic palaces, and experience royal Rajasthani culture.',
+    destination: {
+      city: 'Udaipur',
+      country: 'India'
+    },
+    duration: {
+      days: 4,
+      nights: 3
+    },
+    pricing: {
+      originalPrice: 16000,
+      discountedPrice: 13499,
+      discount: 16
+    },
+    rating: {
+      average: 4.8,
+      count: 203
+    },
+    highlights: ['Palace Visit', 'Lake Cruise', 'Folk Dance', 'Heritage Walk'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Guide'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80'
+    }],
+    bestSeason: 'Oct-Mar',
+    reviews: 203,
+    isSample: true
+  },
+  {
+    _id: 'sample5',
+    packageId: 'sample5',
+    title: 'Andaman Island Honeymoon',
+    category: 'honeymoon',
+    description: 'Perfect honeymoon destination with pristine beaches, coral reefs and luxury resorts.',
+    destination: {
+      city: 'Andaman',
+      country: 'India'
+    },
+    duration: {
+      days: 7,
+      nights: 6
+    },
+    pricing: {
+      originalPrice: 35000,
+      discountedPrice: 29999,
+      discount: 14
+    },
+    rating: {
+      average: 4.9,
+      count: 167
+    },
+    highlights: ['Snorkeling', 'Scuba Diving', 'Sea Walking', 'Sunset View'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Activities', 'Transfer'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1173&q=80'
+    }],
+    bestSeason: 'Nov-May',
+    reviews: 167,
+    isSample: true
+  },
+  {
+    _id: 'sample6',
+    packageId: 'sample6',
+    title: 'Ranthambore Wildlife Safari',
+    category: 'wildlife',
+    description: 'Spot tigers and wildlife in their natural habitat with expert guides and luxury tents.',
+    destination: {
+      city: 'Ranthambore',
+      country: 'India'
+    },
+    duration: {
+      days: 3,
+      nights: 2
+    },
+    pricing: {
+      originalPrice: 12000,
+      discountedPrice: 9999,
+      discount: 17
+    },
+    rating: {
+      average: 4.4,
+      count: 89
+    },
+    highlights: ['Tiger Safari', 'Bird Watching', 'Nature Walk', 'Photography'],
+    inclusions: ['Flight', 'Hotel', 'Meals', 'Safari', 'Guide'],
+    images: [{
+      url: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?ixlib=rb-4.0.3&auto=format&fit=crop&w=1173&q=80'
+    }],
+    bestSeason: 'Oct-Jun',
+    reviews: 89,
+    isSample: true
+  }
+];
 
 const PackagesPageMMT = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   // State
-  const [packages, setPackages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [packages, setPackages] = useState(SAMPLE_PACKAGES); // Start with sample packages
+  const [loading, setLoading] = useState(false); // Start with false since we have samples
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [usingSamples, setUsingSamples] = useState(true);
   
   const [searchForm, setSearchForm] = useState({
     destination: searchParams.get('destination') || '',
@@ -34,41 +239,58 @@ const PackagesPageMMT = () => {
   });
 
   const [activeFilters, setActiveFilters] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
 
-  // Fetch packages
+  // Try to fetch real packages, but keep samples if it fails
   useEffect(() => {
-    fetchPackages();
+    const fetchRealPackages = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/packages`);
+        if (response.data.success && response.data.data.packages.length > 0) {
+          setPackages(response.data.data.packages);
+          setUsingSamples(false);
+        }
+      } catch (error) {
+        console.log('Using sample packages - backend not connected');
+        // Keep using sample packages
+      }
+    };
+
+    fetchRealPackages();
   }, []);
 
-  const fetchPackages = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (filters.priceRange) {
-        const [min, max] = filters.priceRange.split('-');
-        params.minPrice = min;
-        params.maxPrice = max;
-      }
-      if (filters.category) params.category = filters.category;
-      if (filters.rating) params.minRating = filters.rating;
-      if (searchForm.destination) params.destination = searchForm.destination;
-
-      const response = await axios.get(`${API_URL}/packages`, { params });
-      
-      if (response.data.success) {
-        setPackages(response.data.data.packages || []);
-      }
-    } catch (error) {
-      console.error('Error fetching packages:', error);
-      setPackages([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSearch = () => {
-    fetchPackages();
+    // Just filter the existing packages
+    console.log('Searching for:', searchForm.destination);
   };
+
+  const getFilteredPackages = () => {
+    let filtered = [...packages];
+    
+    if (searchQuery) {
+      filtered = filtered.filter(p => 
+        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.destination?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.destination?.country?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (selectedFilter === 'price-low') {
+      filtered.sort((a, b) => (a.pricing?.discountedPrice || 0) - (b.pricing?.discountedPrice || 0));
+    } else if (selectedFilter === 'price-high') {
+      filtered.sort((a, b) => (b.pricing?.discountedPrice || 0) - (a.pricing?.discountedPrice || 0));
+    } else if (selectedFilter === 'rating') {
+      filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
+    } else if (selectedFilter === 'duration') {
+      filtered.sort((a, b) => (a.duration?.nights || 0) - (b.duration?.nights || 0));
+    } else if (selectedFilter === 'popular') {
+      filtered.sort((a, b) => (b.rating?.count || 0) - (a.rating?.count || 0));
+    }
+    
+    return filtered;
+  };
+
+  const filteredPackages = getFilteredPackages();
 
   const applyFilter = (filterType, value) => {
     setFilters(prev => ({
@@ -98,11 +320,19 @@ const PackagesPageMMT = () => {
         'adventure': 'Adventure',
         'honeymoon': 'Honeymoon',
         'family': 'Family',
-        'luxury': 'Luxury'
+        'luxury': 'Luxury',
+        'cultural': 'Cultural',
+        'wildlife': 'Wildlife'
       },
       rating: {
         '4': '4★ & above',
         '4.5': '4.5★ & above'
+      },
+      duration: {
+        '1-3': '1-3 Nights',
+        '4-6': '4-6 Nights',
+        '7-9': '7-9 Nights',
+        '10+': '10+ Nights'
       }
     };
     return labels[type]?.[value] || value;
@@ -118,45 +348,102 @@ const PackagesPageMMT = () => {
     setActiveFilters([]);
   };
 
-  useEffect(() => {
-    fetchPackages();
-  }, [filters]);
+  const filtersList = [
+    { id: 'all', label: 'All Packages' },
+    { id: 'popular', label: 'Most Popular' },
+    { id: 'price-low', label: 'Price: Low to High' },
+    { id: 'price-high', label: 'Price: High to Low' },
+    { id: 'rating', label: 'Top Rated' },
+    { id: 'duration', label: 'Duration: Short to Long' }
+  ];
+
+  const stats = [
+    { label: 'Packages', value: packages.length, icon: Package, color: 'blue' },
+    { label: 'Destinations', value: 6, icon: Globe, color: 'green' },
+    { label: 'Happy Travelers', value: '10K+', icon: Users, color: 'yellow' },
+    { label: 'Best Price', value: 'Guaranteed', icon: Award, color: 'purple' }
+  ];
+
+  const categoryIcons = {
+    'beach': <Umbrella className="w-5 h-5" />,
+    'adventure': <Mountain className="w-5 h-5" />,
+    'honeymoon': <Heart className="w-5 h-5" />,
+    'family': <Users className="w-5 h-5" />,
+    'luxury': <Sparkles className="w-5 h-5" />,
+    'cultural': <Compass className="w-5 h-5" />,
+    'wildlife': <Sun className="w-5 h-5" />
+  };
+
+  const inclusionIcons = {
+    'Flight': <Plane className="w-3 h-3" />,
+    'Hotel': <Hotel className="w-3 h-3" />,
+    'Meals': <Coffee className="w-3 h-3" />,
+    'Sightseeing': <Camera className="w-3 h-3" />,
+    'Transfer': <Car className="w-3 h-3" />,
+    'Visa': <Globe className="w-3 h-3" />,
+    'Guide': <Users className="w-3 h-3" />,
+    'Activities': <Gift className="w-3 h-3" />,
+    'Ayurveda': <Sparkles className="w-3 h-3" />,
+    'Safari': <Camera className="w-3 h-3" />
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Finding amazing travel packages...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Header Search Bar - MakeMyTrip Style */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="bg-white rounded-lg shadow-xl p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Destination */}
-              <div className="relative">
-                <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                  Enter City / Package Name
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        ></div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">
+              Discover Your Dream Holiday
+            </h1>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Curated travel packages for every budget and style
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
+              <div className="flex flex-col md:flex-row">
+                <div className="flex-1 flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
+                  <MapPin className="w-5 h-5 text-gray-400 mr-2" />
                   <input
                     type="text"
-                    placeholder="e.g. Goa, Dubai, Maldives"
+                    placeholder="Where do you want to go?"
+                    className="w-full py-4 text-gray-900 placeholder-gray-400 focus:outline-none"
                     value={searchForm.destination}
                     onChange={(e) => setSearchForm({ ...searchForm, destination: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:outline-none text-gray-900 font-medium"
                   />
                 </div>
-              </div>
-
-              {/* Month */}
-              <div className="relative">
-                <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                  Month of Travel
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
+                  <Calendar className="w-5 h-5 text-gray-400 mr-2" />
                   <select
                     value={searchForm.month}
                     onChange={(e) => setSearchForm({ ...searchForm, month: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:outline-none text-gray-900 font-medium appearance-none cursor-pointer"
+                    className="w-full py-4 text-gray-900 focus:outline-none bg-transparent"
                   >
                     <option value="">Select Month</option>
                     <option value="Feb 2026">Feb 2026</option>
@@ -166,21 +453,26 @@ const PackagesPageMMT = () => {
                     <option value="Jun 2026">Jun 2026</option>
                   </select>
                 </div>
-              </div>
-
-              {/* No. of Nights */}
-              <div className="relative">
-                <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                  No. of Nights
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
+                  <Users className="w-5 h-5 text-gray-400 mr-2" />
+                  <select
+                    value={searchForm.travelers}
+                    onChange={(e) => setSearchForm({ ...searchForm, travelers: e.target.value })}
+                    className="w-full py-4 text-gray-900 focus:outline-none bg-transparent"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map(num => (
+                      <option key={num} value={num}>{num} {num === 1 ? 'Traveler' : 'Travelers'}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center px-4">
+                  <Clock className="w-5 h-5 text-gray-400 mr-2" />
                   <select
                     value={searchForm.nights}
                     onChange={(e) => setSearchForm({ ...searchForm, nights: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:outline-none text-gray-900 font-medium appearance-none cursor-pointer"
+                    className="w-full py-4 text-gray-900 focus:outline-none bg-transparent"
                   >
-                    <option value="">Select</option>
+                    <option value="">Nights</option>
                     <option value="3">3 Nights</option>
                     <option value="4">4 Nights</option>
                     <option value="5">5 Nights</option>
@@ -188,447 +480,432 @@ const PackagesPageMMT = () => {
                   </select>
                 </div>
               </div>
-
-              {/* Travelers */}
-              <div className="relative">
-                <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                  No. of Travelers
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <select
-                    value={searchForm.travelers}
-                    onChange={(e) => setSearchForm({ ...searchForm, travelers: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:outline-none text-gray-900 font-medium appearance-none cursor-pointer"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(num => (
-                      <option key={num} value={num}>{num} {num === 1 ? 'Traveler' : 'Travelers'}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="p-2 bg-gray-50 rounded-b-xl flex justify-end">
+                <Button variant="primary" className="px-8" onClick={handleSearch}>
+                  <Search className="w-5 h-5 mr-2" />
+                  Search Packages
+                </Button>
               </div>
             </div>
-
-            {/* Search Button */}
-            <div className="mt-6">
-              <button
-                onClick={handleSearch}
-                className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-12 py-3.5 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Search className="w-5 h-5" />
-                SEARCH PACKAGES
-              </button>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Trust Badges - MakeMyTrip Style */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-green-600" />
-              <div>
-                <div className="font-bold text-gray-900">100% Safe</div>
-                <div className="text-xs text-gray-600">Secure Payments</div>
+      {/* Stats Section */}
+      <div className="max-w-7xl mx-auto px-4 -mt-8 relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white rounded-xl shadow-lg p-6 border border-gray-100"
+            >
+              <div className={`inline-flex p-3 bg-${stat.color}-100 rounded-lg mb-3`}>
+                <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Award className="w-8 h-8 text-blue-600" />
-              <div>
-                <div className="font-bold text-gray-900">Best Price</div>
-                <div className="text-xs text-gray-600">Guaranteed</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="w-8 h-8 text-orange-600" />
-              <div>
-                <div className="font-bold text-gray-900">24/7 Support</div>
-                <div className="text-xs text-gray-600">Travel Experts</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-8 h-8 text-purple-600" />
-              <div>
-                <div className="font-bold text-gray-900">Customizable</div>
-                <div className="text-xs text-gray-600">Flexible Packages</div>
-              </div>
-            </div>
-          </div>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              <p className="text-sm text-gray-600">{stat.label}</p>
+            </motion.div>
+          ))}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar Filters - Desktop */}
-          <div className="hidden lg:block w-72 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm sticky top-4">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <Filter className="w-5 h-5" />
-                  Filters
-                </h3>
-                {activeFilters.length > 0 && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    Clear All
-                  </button>
-                )}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Sample Packages Notice - Like other dashboards */}
+        {usingSamples && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <Package className="w-5 h-5 text-orange-600" />
               </div>
-
-              <div className="p-4 space-y-6">
-                {/* Price Range */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Price Per Person</h4>
-                  <div className="space-y-2">
-                    {[
-                      { label: 'Upto ₹15,000', value: '0-15000' },
-                      { label: '₹15,000 - ₹30,000', value: '15000-30000' },
-                      { label: '₹30,000 - ₹50,000', value: '30000-50000' },
-                      { label: '₹50,000 & Above', value: '50000-100000' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={filters.priceRange === option.value}
-                          onChange={() => applyFilter('priceRange', option.value)}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Theme */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Holiday Theme</h4>
-                  <div className="space-y-2">
-                    {[
-                      { label: '🏖️ Beach', value: 'beach' },
-                      { label: '🏔️ Adventure', value: 'adventure' },
-                      { label: '💑 Honeymoon', value: 'honeymoon' },
-                      { label: '👨‍👩‍👧‍👦 Family', value: 'family' },
-                      { label: '💎 Luxury', value: 'luxury' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={filters.category === option.value}
-                          onChange={() => applyFilter('category', option.value)}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Rating */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">User Rating</h4>
-                  <div className="space-y-2">
-                    {[
-                      { label: '4.5★ & above', value: '4.5' },
-                      { label: '4★ & above', value: '4' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={filters.rating === option.value}
-                          onChange={() => applyFilter('rating', option.value)}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Sample Packages</h2>
+              <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium ml-3">
+                Demo Mode
+              </span>
             </div>
+            <p className="text-gray-600">
+              These are sample packages for demonstration. Connect your backend to see real packages.
+            </p>
           </div>
+        )}
 
-          {/* Package Listings */}
-          <div className="flex-1">
-            {/* Active Filters */}
-            {activeFilters.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700">Applied Filters:</span>
-                  {activeFilters.map((filter, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium"
-                    >
-                      {filter.label}
-                      <button
-                        onClick={() => applyFilter(filter.type, filter.value)}
-                        className="hover:bg-blue-200 rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <button
-                    onClick={clearFilters}
-                    className="text-sm text-red-600 hover:text-red-700 font-semibold ml-2"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* Filters Bar */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6 sticky top-20 z-40">
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <Filter className="w-5 h-5" />
+              <span className="font-medium">Filters</span>
+              <ChevronRight className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} />
+            </button>
 
-            {/* Results Header */}
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {packages.length} Holiday Packages Found
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Explore handpicked packages curated by travel experts
-              </p>
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Sort by:</span>
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                {filtersList.map(f => (
+                  <option key={f.id} value={f.id}>{f.label}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Loading State */}
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                    <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : packages.length === 0 ? (
-              /* Empty State */
-              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                <div className="text-6xl mb-4">✈️</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No Packages Found</h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your filters or search criteria
-                </p>
-                <button
-                  onClick={clearFilters}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            ) : (
-              /* Package Grid - MakeMyTrip Card Style */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {packages.map((pkg) => (
-                  <PackageCardMMT
-                    key={pkg._id || pkg.packageId}
-                    package={pkg}
-                    onClick={() => navigate(`/package/${pkg._id || pkg.packageId}`)}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="flex-1"></div>
+
+            <p className="text-sm text-gray-600">
+              <span className="font-bold text-gray-900">{filteredPackages.length}</span> packages found
+            </p>
           </div>
+
+          {/* Expanded Filters */}
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-gray-200 mt-4 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {/* Price Range */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Price Per Person</h3>
+                    <div className="space-y-2">
+                      {[
+                        { label: 'Upto ₹15,000', value: '0-15000' },
+                        { label: '₹15,000 - ₹30,000', value: '15000-30000' },
+                        { label: '₹30,000 - ₹50,000', value: '30000-50000' },
+                        { label: '₹50,000 & Above', value: '50000-100000' }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={filters.priceRange === option.value}
+                            onChange={() => applyFilter('priceRange', option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Duration */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Duration</h3>
+                    <div className="space-y-2">
+                      {[
+                        { label: '1-3 Nights', value: '1-3' },
+                        { label: '4-6 Nights', value: '4-6' },
+                        { label: '7-9 Nights', value: '7-9' },
+                        { label: '10+ Nights', value: '10+' }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={filters.duration === option.value}
+                            onChange={() => applyFilter('duration', option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Theme */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Holiday Theme</h3>
+                    <div className="space-y-2">
+                      {[
+                        { label: '🏖️ Beach', value: 'beach' },
+                        { label: '🏔️ Adventure', value: 'adventure' },
+                        { label: '💑 Honeymoon', value: 'honeymoon' },
+                        { label: '👨‍👩‍👧‍👦 Family', value: 'family' },
+                        { label: '💎 Luxury', value: 'luxury' },
+                        { label: '🏛️ Cultural', value: 'cultural' },
+                        { label: '🦁 Wildlife', value: 'wildlife' }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={filters.category === option.value}
+                            onChange={() => applyFilter('category', option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rating */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">User Rating</h3>
+                    <div className="space-y-2">
+                      {[
+                        { label: '4.5★ & above', value: '4.5' },
+                        { label: '4★ & above', value: '4' }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={filters.rating === option.value}
+                            onChange={() => applyFilter('rating', option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+                  <Button variant="outline" size="sm" onClick={clearFilters}>Reset</Button>
+                  <Button variant="primary" size="sm" onClick={() => setShowFilters(false)}>Apply Filters</Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-      </div>
 
-      {/* Mobile Filter Button */}
-      <button
-        onClick={() => setShowMobileFilters(true)}
-        className="lg:hidden fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg z-40"
-      >
-        <Filter className="w-6 h-6" />
-      </button>
-
-      {/* Mobile Filters Modal */}
-      {showMobileFilters && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-              <h3 className="font-bold text-lg">Filters</h3>
-              <button onClick={() => setShowMobileFilters(false)}>
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-4">
-              {/* Mobile filter content - same as sidebar */}
-            </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex gap-2">
+        {/* Active Filters */}
+        {activeFilters.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-gray-700">Applied Filters:</span>
+              {activeFilters.map((filter, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium"
+                >
+                  {filter.label}
+                  <button
+                    onClick={() => applyFilter(filter.type, filter.value)}
+                    className="hover:bg-blue-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
               <button
-                onClick={() => {
-                  clearFilters();
-                  setShowMobileFilters(false);
-                }}
-                className="flex-1 border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-semibold"
+                onClick={clearFilters}
+                className="text-sm text-red-600 hover:text-red-700 font-semibold ml-2"
               >
                 Clear All
               </button>
-              <button
-                onClick={() => setShowMobileFilters(false)}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold"
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// MakeMyTrip-Style Package Card Component
-const PackageCardMMT = ({ package: pkg, onClick }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-
-  const discount = pkg.pricing.discount || Math.round(
-    ((pkg.pricing.originalPrice - pkg.pricing.discountedPrice) / pkg.pricing.originalPrice) * 100
-  );
-
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 hover:border-blue-500 group"
-    >
-      {/* Image Section */}
-      <div className="relative h-56 overflow-hidden">
-        <img
-          src={pkg.images?.[0]?.url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'}
-          alt={pkg.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-        
-        {/* Wishlist */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsWishlisted(!isWishlisted);
-          }}
-          className="absolute top-3 right-3 bg-white hover:bg-gray-100 p-2 rounded-full shadow-lg transition-all z-10"
-        >
-          <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
-        </button>
-
-        {/* Discount Badge */}
-        {discount > 0 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
-            <Tag className="w-4 h-4" />
-            {discount}% OFF
-          </div>
-        )}
-
-        {/* Category Badge */}
-        <div className="absolute bottom-3 left-3">
-          <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow">
-            {pkg.category}
-          </span>
-        </div>
-
-        {/* Duration Badge */}
-        <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 shadow-lg">
-          <Clock className="w-4 h-4" />
-          {pkg.duration.days}D/{pkg.duration.nights}N
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="p-4">
-        {/* Title & Location */}
-        <div className="mb-3">
-          <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
-            {pkg.title}
-          </h3>
-          <div className="flex items-center text-gray-600 text-sm">
-            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-            <span className="line-clamp-1">{pkg.destination.city}, {pkg.destination.country}</span>
-          </div>
-        </div>
-
-        {/* Highlights */}
-        {pkg.highlights && pkg.highlights.length > 0 && (
-          <div className="mb-3">
-            <div className="flex flex-wrap gap-1.5">
-              {pkg.highlights.slice(0, 2).map((highlight, index) => (
-                <span
-                  key={index}
-                  className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded font-medium flex items-center gap-1"
-                >
-                  <Check className="w-3 h-3" />
-                  {highlight.length > 25 ? highlight.substring(0, 25) + '...' : highlight}
-                </span>
-              ))}
             </div>
           </div>
         )}
 
-        {/* Rating */}
-        {pkg.rating && pkg.rating.average > 0 && (
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center bg-green-600 text-white px-2 py-1 rounded font-bold text-sm gap-1">
-              <Star className="w-3.5 h-3.5 fill-white" />
-              {pkg.rating.average.toFixed(1)}
-            </div>
-            <span className="text-sm text-gray-600">
-              ({pkg.rating.count} reviews)
-            </span>
-            <div className="ml-auto text-xs text-gray-500">
-              {pkg.bestSeason && `Best: ${pkg.bestSeason.split(' ')[0]}`}
-            </div>
-          </div>
-        )}
+        {/* Packages Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPackages.map((pkg, index) => (
+            <motion.div
+              key={pkg._id || pkg.packageId || index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="group"
+            >
+              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-2 hover:border-blue-200">
+                {/* Image */}
+                <div className="relative h-56 overflow-hidden">
+                  <img
+                    src={pkg.images?.[0]?.url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'}
+                    alt={pkg.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                  
+                  {/* Wishlist */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWishlist(prev => 
+                        prev.includes(pkg._id) 
+                          ? prev.filter(id => id !== pkg._id)
+                          : [...prev, pkg._id]
+                      );
+                    }}
+                    className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm hover:bg-white p-2 rounded-full shadow-lg transition-all z-10"
+                  >
+                    <Heart className={`w-5 h-5 ${wishlist.includes(pkg._id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                  </button>
 
-        {/* Divider */}
-        <div className="border-t border-gray-200 my-3"></div>
+                  {/* Discount Badge */}
+                  {pkg.pricing?.discount > 0 && (
+                    <div className="absolute top-3 left-3">
+                      <Badge variant="primary" className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+                        <Tag className="w-3 h-3 mr-1" />
+                        {pkg.pricing.discount}% OFF
+                      </Badge>
+                    </div>
+                  )}
 
-        {/* Price & CTA */}
-        <div className="flex items-end justify-between">
-          <div>
-            {pkg.pricing.originalPrice !== pkg.pricing.discountedPrice && (
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm text-gray-500 line-through">
-                  ₹{pkg.pricing.originalPrice.toLocaleString('en-IN')}
-                </span>
-                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-semibold">
-                  SAVE ₹{(pkg.pricing.originalPrice - pkg.pricing.discountedPrice).toLocaleString('en-IN')}
-                </span>
-              </div>
-            )}
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-blue-600">
-                ₹{pkg.pricing.discountedPrice.toLocaleString('en-IN')}
-              </span>
-              <span className="text-sm text-gray-600">per person</span>
-            </div>
-          </div>
+                  {/* Category Badge */}
+                  <div className="absolute bottom-3 left-3">
+                    <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-900 border-0">
+                      {categoryIcons[pkg.category] || <Package className="w-3 h-3 mr-1" />}
+                      <span className="text-xs font-bold uppercase tracking-wide">{pkg.category}</span>
+                    </Badge>
+                  </div>
 
-          <button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-1 shadow-md hover:shadow-lg transition-all">
-            VIEW DETAILS
-            <ChevronRight className="w-4 h-4" />
-          </button>
+                  {/* Duration Badge */}
+                  <div className="absolute bottom-3 right-3">
+                    <Badge variant="primary" className="bg-blue-600 text-white border-0">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {pkg.duration?.days || pkg.duration?.nights || 'N/A'}D/{pkg.duration?.nights || 'N/A'}N
+                    </Badge>
+                  </div>
+
+                  {/* Sample Badge - Like other dashboards */}
+                  {pkg.isSample && (
+                    <div className="absolute top-3 left-16">
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                        Sample
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  {/* Title & Location */}
+                  <div className="mb-3">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {pkg.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-gray-500 mt-1">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm truncate">{pkg.destination?.city}, {pkg.destination?.country}</span>
+                    </div>
+                  </div>
+
+                  {/* Highlights */}
+                  {pkg.highlights && pkg.highlights.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {pkg.highlights.slice(0, 2).map((highlight, i) => (
+                        <Badge key={i} variant="secondary" size="sm" className="bg-green-50 text-green-700 border-green-100">
+                          <Check className="w-3 h-3 mr-1" />
+                          <span className="text-xs">{highlight.length > 20 ? highlight.substring(0, 20) + '...' : highlight}</span>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Rating */}
+                  {pkg.rating && pkg.rating.average > 0 && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center bg-green-600 text-white px-2 py-1 rounded font-bold text-sm gap-1">
+                        <Star className="w-3.5 h-3.5 fill-white" />
+                        {pkg.rating.average.toFixed(1)}
+                      </div>
+                      <span className="text-sm text-gray-600">
+                        ({pkg.rating.count} reviews)
+                      </span>
+                      {pkg.bestSeason && (
+                        <span className="text-xs text-gray-500 ml-auto">
+                          Best: {pkg.bestSeason.split(' ')[0]}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Inclusions Preview */}
+                  {pkg.inclusions && pkg.inclusions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {pkg.inclusions.slice(0, 3).map((item, i) => (
+                        <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700 border-blue-100">
+                          {inclusionIcons[item] || <Package className="w-3 h-3 mr-1" />}
+                          <span className="text-xs">{item.length > 15 ? item.substring(0, 15) + '...' : item}</span>
+                        </Badge>
+                      ))}
+                      {pkg.inclusions.length > 3 && (
+                        <Badge variant="secondary" size="sm" className="bg-gray-100">
+                          +{pkg.inclusions.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Price & CTA */}
+                  <div className="flex items-end justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div>
+                      {pkg.pricing?.originalPrice !== pkg.pricing?.discountedPrice && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm text-gray-500 line-through">
+                            ₹{pkg.pricing?.originalPrice?.toLocaleString('en-IN')}
+                          </span>
+                          <Badge variant="primary" size="sm" className="bg-red-100 text-red-700 border-red-200">
+                            Save ₹{(pkg.pricing?.originalPrice - pkg.pricing?.discountedPrice).toLocaleString('en-IN')}
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-bold text-blue-600">
+                          ₹{pkg.pricing?.discountedPrice?.toLocaleString('en-IN') || '0'}
+                        </span>
+                        <span className="text-sm text-gray-600">per person</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => navigate(`/package/${pkg._id || pkg.packageId}`)}
+                      variant="primary"
+                      size="sm"
+                      className="group"
+                    >
+                      View Details
+                      <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Inclusions Preview */}
-        {pkg.inclusions && pkg.inclusions.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="text-xs text-gray-600 font-semibold mb-1.5">Package Includes:</div>
-            <div className="flex flex-wrap gap-2">
-              {pkg.inclusions.slice(0, 3).map((item, index) => (
-                <span key={index} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                  {item.length > 20 ? item.substring(0, 20) + '...' : item}
-                </span>
-              ))}
-              {pkg.inclusions.length > 3 && (
-                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-semibold">
-                  +{pkg.inclusions.length - 3} more
-                </span>
-              )}
-            </div>
+        {/* No Results */}
+        {filteredPackages.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-xl shadow-md p-12 text-center"
+          >
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No packages found</h3>
+            <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedFilter('all');
+                clearFilters();
+              }}
+            >
+              Clear All Filters
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Load More */}
+        {filteredPackages.length > 0 && filteredPackages.length >= 6 && (
+          <div className="mt-8 text-center">
+            <Button variant="outline" size="lg" className="px-12">
+              Load More Packages
+            </Button>
           </div>
         )}
       </div>
