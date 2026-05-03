@@ -1,122 +1,436 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bus, Clock, MapPin, ArrowRight, Search, Filter, 
   Calendar, Users, Wifi, Coffee, Battery, AlertCircle,
-  ChevronDown, Star, Luggage, Tv, Wind, Droplets
+  ChevronDown, Star, Luggage, Tv, Wind, Droplets,
+  Award, Shield, RefreshCw, X, CheckCircle, Power,
+  Thermometer, Umbrella, Wifi as WifiIcon
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Card from '../ui/Card';
+
+// Expanded bus data with 20+ listings
+const allBuses = [
+  {
+    id: 'BS001',
+    name: 'VRL Travels',
+    type: 'Volvo AC Sleeper',
+    from: { city: 'Bangalore', time: '21:30', depot: 'Madiwala', code: 'BLR' },
+    to: { city: 'Mumbai', time: '16:30', depot: 'Dadar', code: 'BOM' },
+    duration: '19h 00m',
+    price: 1250,
+    rating: 4.5,
+    reviews: 2345,
+    seats: 24,
+    totalSeats: 36,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Entertainment'],
+    operator: 'VRL',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS002',
+    name: 'SRS Travels',
+    type: 'Volvo AC Seater',
+    from: { city: 'Hyderabad', time: '22:00', depot: 'JBS', code: 'HYD' },
+    to: { city: 'Chennai', time: '08:30', depot: 'Koyambedu', code: 'MAA' },
+    duration: '10h 30m',
+    price: 950,
+    rating: 4.3,
+    reviews: 1876,
+    seats: 32,
+    totalSeats: 42,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
+    operator: 'SRS',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater', 'Volvo'],
+    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS003',
+    name: 'Orange Travels',
+    type: 'Bharat Benz AC Sleeper',
+    from: { city: 'Pune', time: '23:00', depot: 'Swargate', code: 'PNQ' },
+    to: { city: 'Goa', time: '09:00', depot: 'Panjim', code: 'GOI' },
+    duration: '10h 00m',
+    price: 1100,
+    rating: 4.4,
+    reviews: 1543,
+    seats: 18,
+    totalSeats: 30,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi'],
+    operator: 'Orange',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS004',
+    name: 'Kallada Travels',
+    type: 'Non-AC Sleeper',
+    from: { city: 'Chennai', time: '20:00', depot: 'Koyambedu', code: 'MAA' },
+    to: { city: 'Bangalore', time: '04:30', depot: 'Madiwala', code: 'BLR' },
+    duration: '8h 30m',
+    price: 650,
+    rating: 4.0,
+    reviews: 987,
+    seats: 28,
+    totalSeats: 40,
+    amenities: ['Charging Point', 'Water Bottle'],
+    operator: 'Kallada',
+    typeClass: 'Non-AC Sleeper',
+    busType: ['Non-AC', 'Sleeper'],
+    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS005',
+    name: 'Neeta Travels',
+    type: 'Volvo AC Seater',
+    from: { city: 'Mumbai', time: '22:30', depot: 'Dadar', code: 'BOM' },
+    to: { city: 'Pune', time: '02:30', depot: 'Swargate', code: 'PNQ' },
+    duration: '4h 00m',
+    price: 450,
+    rating: 4.2,
+    reviews: 2134,
+    seats: 42,
+    totalSeats: 48,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
+    operator: 'Neeta',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater', 'Volvo'],
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS006',
+    name: 'Raj Express',
+    type: 'Volvo Multi-Axle Sleeper',
+    from: { city: 'Delhi', time: '20:00', depot: 'ISBT Kashmiri Gate', code: 'DEL' },
+    to: { city: 'Jaipur', time: '04:00', depot: 'Sindhi Camp', code: 'JAI' },
+    duration: '8h 00m',
+    price: 850,
+    rating: 4.6,
+    reviews: 3122,
+    seats: 22,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
+    operator: 'Raj Express',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo', 'Multi-Axle'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS007',
+    name: 'City Express',
+    type: 'AC Seater',
+    from: { city: 'Delhi', time: '06:00', depot: 'ISBT', code: 'DEL' },
+    to: { city: 'Agra', time: '09:30', depot: 'Idgah', code: 'AGR' },
+    duration: '3h 30m',
+    price: 350,
+    rating: 4.1,
+    reviews: 876,
+    seats: 35,
+    totalSeats: 40,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment'],
+    operator: 'City Express',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater'],
+    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS008',
+    name: 'Sharma Travels',
+    type: 'Volvo AC Sleeper',
+    from: { city: 'Jaipur', time: '21:00', depot: 'Sindhi Camp', code: 'JAI' },
+    to: { city: 'Delhi', time: '05:00', depot: 'ISBT', code: 'DEL' },
+    duration: '8h 00m',
+    price: 900,
+    rating: 4.4,
+    reviews: 1432,
+    seats: 20,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi'],
+    operator: 'Sharma Travels',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS009',
+    name: 'GreenLine',
+    type: 'Volvo Multi-Axle',
+    from: { city: 'Bangalore', time: '22:00', depot: 'Madiwala', code: 'BLR' },
+    to: { city: 'Hyderabad', time: '08:00', depot: 'JBS', code: 'HYD' },
+    duration: '10h 00m',
+    price: 1150,
+    rating: 4.5,
+    reviews: 1987,
+    seats: 28,
+    totalSeats: 36,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment', 'Snacks'],
+    operator: 'GreenLine',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo', 'Multi-Axle'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS010',
+    name: 'Paulo Travels',
+    type: 'AC Sleeper',
+    from: { city: 'Goa', time: '20:30', depot: 'Panjim', code: 'GOI' },
+    to: { city: 'Mumbai', time: '07:00', depot: 'Dadar', code: 'BOM' },
+    duration: '10h 30m',
+    price: 1050,
+    rating: 4.3,
+    reviews: 1122,
+    seats: 25,
+    totalSeats: 34,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light'],
+    operator: 'Paulo',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper'],
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS011',
+    name: 'Vivek Travels',
+    type: 'Non-AC Seater',
+    from: { city: 'Chennai', time: '07:00', depot: 'Koyambedu', code: 'MAA' },
+    to: { city: 'Bangalore', time: '13:00', depot: 'Madiwala', code: 'BLR' },
+    duration: '6h 00m',
+    price: 450,
+    rating: 3.9,
+    reviews: 654,
+    seats: 45,
+    totalSeats: 48,
+    amenities: ['Water Bottle'],
+    operator: 'Vivek',
+    typeClass: 'Non-AC Seater',
+    busType: ['Non-AC', 'Seater'],
+    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS012',
+    name: 'National Travels',
+    type: 'Volvo AC Sleeper',
+    from: { city: 'Mumbai', time: '20:00', depot: 'Dadar', code: 'BOM' },
+    to: { city: 'Goa', time: '06:30', depot: 'Panjim', code: 'GOI' },
+    duration: '10h 30m',
+    price: 1200,
+    rating: 4.6,
+    reviews: 2341,
+    seats: 18,
+    totalSeats: 30,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
+    operator: 'National',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS013',
+    name: 'Sky Bus',
+    type: 'Volvo AC Seater',
+    from: { city: 'Hyderabad', time: '08:00', depot: 'JBS', code: 'HYD' },
+    to: { city: 'Bangalore', time: '16:00', depot: 'Madiwala', code: 'BLR' },
+    duration: '8h 00m',
+    price: 850,
+    rating: 4.2,
+    reviews: 987,
+    seats: 38,
+    totalSeats: 42,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
+    operator: 'Sky Bus',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater', 'Volvo'],
+    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS014',
+    name: 'City Link',
+    type: 'AC Sleeper',
+    from: { city: 'Pune', time: '21:00', depot: 'Swargate', code: 'PNQ' },
+    to: { city: 'Mumbai', time: '02:00', depot: 'Dadar', code: 'BOM' },
+    duration: '5h 00m',
+    price: 550,
+    rating: 4.0,
+    reviews: 765,
+    seats: 30,
+    totalSeats: 34,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle'],
+    operator: 'City Link',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper'],
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS015',
+    name: 'Royal Express',
+    type: 'Volvo Multi-Axle',
+    from: { city: 'Jaipur', time: '22:00', depot: 'Sindhi Camp', code: 'JAI' },
+    to: { city: 'Delhi', time: '06:00', depot: 'ISBT', code: 'DEL' },
+    duration: '8h 00m',
+    price: 950,
+    rating: 4.5,
+    reviews: 1654,
+    seats: 24,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
+    operator: 'Royal Express',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo', 'Multi-Axle'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS016',
+    name: 'Superfast Travels',
+    type: 'AC Seater',
+    from: { city: 'Delhi', time: '07:00', depot: 'ISBT', code: 'DEL' },
+    to: { city: 'Chandigarh', time: '11:00', depot: 'ISBT', code: 'CHD' },
+    duration: '4h 00m',
+    price: 500,
+    rating: 4.1,
+    reviews: 876,
+    seats: 40,
+    totalSeats: 45,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment'],
+    operator: 'Superfast',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater'],
+    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS017',
+    name: 'Coastal Travels',
+    type: 'Volvo AC Sleeper',
+    from: { city: 'Goa', time: '19:30', depot: 'Panjim', code: 'GOI' },
+    to: { city: 'Bangalore', time: '07:30', depot: 'Madiwala', code: 'BLR' },
+    duration: '12h 00m',
+    price: 1350,
+    rating: 4.5,
+    reviews: 1432,
+    seats: 22,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
+    operator: 'Coastal',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS018',
+    name: 'City Express',
+    type: 'Non-AC Sleeper',
+    from: { city: 'Chennai', time: '21:00', depot: 'Koyambedu', code: 'MAA' },
+    to: { city: 'Hyderabad', time: '07:00', depot: 'JBS', code: 'HYD' },
+    duration: '10h 00m',
+    price: 750,
+    rating: 3.8,
+    reviews: 543,
+    seats: 32,
+    totalSeats: 38,
+    amenities: ['Charging Point', 'Water Bottle'],
+    operator: 'City Express',
+    typeClass: 'Non-AC Sleeper',
+    busType: ['Non-AC', 'Sleeper'],
+    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS019',
+    name: 'Shree Travels',
+    type: 'AC Sleeper',
+    from: { city: 'Mumbai', time: '21:30', depot: 'Dadar', code: 'BOM' },
+    to: { city: 'Pune', time: '02:00', depot: 'Swargate', code: 'PNQ' },
+    duration: '4h 30m',
+    price: 500,
+    rating: 4.2,
+    reviews: 1122,
+    seats: 28,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light'],
+    operator: 'Shree',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper'],
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS020',
+    name: 'VIP Travels',
+    type: 'Volvo Multi-Axle',
+    from: { city: 'Delhi', time: '21:00', depot: 'ISBT', code: 'DEL' },
+    to: { city: 'Lucknow', time: '05:00', depot: 'Alambagh', code: 'LKO' },
+    duration: '8h 00m',
+    price: 1050,
+    rating: 4.6,
+    reviews: 1876,
+    seats: 20,
+    totalSeats: 30,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment', 'Snacks'],
+    operator: 'VIP',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper', 'Volvo', 'Multi-Axle'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS021',
+    name: 'YBM Travels',
+    type: 'Bharat Benz AC Sleeper',
+    from: { city: 'Bangalore', time: '20:30', depot: 'Madiwala', code: 'BLR' },
+    to: { city: 'Goa', time: '08:30', depot: 'Panjim', code: 'GOI' },
+    duration: '12h 00m',
+    price: 1300,
+    rating: 4.4,
+    reviews: 1654,
+    seats: 24,
+    totalSeats: 32,
+    amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
+    operator: 'YBM',
+    typeClass: 'AC Sleeper',
+    busType: ['AC', 'Sleeper'],
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'BS022',
+    name: 'Dolphin Travels',
+    type: 'Volvo AC Seater',
+    from: { city: 'Mumbai', time: '07:30', depot: 'Dadar', code: 'BOM' },
+    to: { city: 'Pune', time: '10:30', depot: 'Swargate', code: 'PNQ' },
+    duration: '3h 00m',
+    price: 350,
+    rating: 4.3,
+    reviews: 2341,
+    seats: 44,
+    totalSeats: 48,
+    amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
+    operator: 'Dolphin',
+    typeClass: 'AC Seater',
+    busType: ['AC', 'Seater', 'Volvo'],
+    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  }
+];
 
 const BusesDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  
-  const buses = [
-    {
-      id: 'BS001',
-      name: 'VRL Travels',
-      type: 'Volvo AC Sleeper',
-      from: { city: 'Bangalore', time: '21:30', depot: 'Madiwala', code: 'BLR' },
-      to: { city: 'Mumbai', time: '16:30', depot: 'Dadar', code: 'BOM' },
-      duration: '19h 00m',
-      price: 1250,
-      rating: 4.5,
-      reviews: 2345,
-      seats: 24,
-      totalSeats: 36,
-      amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Entertainment'],
-      operator: 'VRL',
-      typeClass: 'AC Sleeper',
-      popular: true
-    },
-    {
-      id: 'BS002',
-      name: 'SRS Travels',
-      type: 'Volvo AC Seater',
-      from: { city: 'Hyderabad', time: '22:00', depot: 'JBS', code: 'HYD' },
-      to: { city: 'Chennai', time: '08:30', depot: 'Koyambedu', code: 'MAA' },
-      duration: '10h 30m',
-      price: 950,
-      rating: 4.3,
-      reviews: 1876,
-      seats: 32,
-      totalSeats: 42,
-      amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
-      operator: 'SRS',
-      typeClass: 'AC Seater'
-    },
-    {
-      id: 'BS003',
-      name: 'Orange Travels',
-      type: 'Bharat Benz AC Sleeper',
-      from: { city: 'Pune', time: '23:00', depot: 'Swargate', code: 'PNQ' },
-      to: { city: 'Goa', time: '09:00', depot: 'Panjim', code: 'GOI' },
-      duration: '10h 00m',
-      price: 1100,
-      rating: 4.4,
-      reviews: 1543,
-      seats: 18,
-      totalSeats: 30,
-      amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi'],
-      operator: 'Orange',
-      typeClass: 'AC Sleeper',
-      popular: true
-    },
-    {
-      id: 'BS004',
-      name: 'Kallada Travels',
-      type: 'Non-AC Sleeper',
-      from: { city: 'Chennai', time: '20:00', depot: 'Koyambedu', code: 'MAA' },
-      to: { city: 'Bangalore', time: '04:30', depot: 'Madiwala', code: 'BLR' },
-      duration: '8h 30m',
-      price: 650,
-      rating: 4.0,
-      reviews: 987,
-      seats: 28,
-      totalSeats: 40,
-      amenities: ['Charging Point', 'Water Bottle'],
-      operator: 'Kallada',
-      typeClass: 'Non-AC Sleeper'
-    },
-    {
-      id: 'BS005',
-      name: 'Neeta Travels',
-      type: 'Volvo AC Seater',
-      from: { city: 'Mumbai', time: '22:30', depot: 'Dadar', code: 'BOM' },
-      to: { city: 'Pune', time: '02:30', depot: 'Swargate', code: 'PNQ' },
-      duration: '4h 00m',
-      price: 450,
-      rating: 4.2,
-      reviews: 2134,
-      seats: 42,
-      totalSeats: 48,
-      amenities: ['Charging Point', 'Water Bottle', 'Entertainment', 'Snacks'],
-      operator: 'Neeta',
-      typeClass: 'AC Seater'
-    },
-    {
-      id: 'BS006',
-      name: 'Raj Express',
-      type: 'Volvo Multi-Axle Sleeper',
-      from: { city: 'Delhi', time: '20:00', depot: 'ISBT Kashmiri Gate', code: 'DEL' },
-      to: { city: 'Jaipur', time: '04:00', depot: 'Sindhi Camp', code: 'JAI' },
-      duration: '8h 00m',
-      price: 850,
-      rating: 4.6,
-      reviews: 3122,
-      seats: 22,
-      totalSeats: 32,
-      amenities: ['Charging Point', 'Blanket', 'Water Bottle', 'Reading Light', 'Wi-Fi', 'Entertainment'],
-      operator: 'Raj Express',
-      typeClass: 'AC Sleeper',
-      popular: true
-    }
-  ];
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [loading, setLoading] = useState(false);
+  const [selectedBusTypes, setSelectedBusTypes] = useState([]);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 2000 });
 
   const popularRoutes = [
     { from: 'Bangalore', to: 'Mumbai', price: '₹1,250', duration: '19h', buses: 12 },
@@ -137,24 +451,42 @@ const BusesDashboard = () => {
     { id: 'price-low', label: 'Price: Low to High' },
     { id: 'price-high', label: 'Price: High to Low' },
     { id: 'duration', label: 'Fastest First' },
-    { id: 'rating', label: 'Top Rated' }
+    { id: 'rating', label: 'Top Rated' },
+    { id: 'departure', label: 'Departure Time' }
   ];
 
-  const busTypes = ['AC Sleeper', 'AC Seater', 'Non-AC Sleeper', 'Non-AC Seater'];
+  const busTypeOptions = ['AC', 'Non-AC', 'Sleeper', 'Seater', 'Volvo', 'Multi-Axle'];
+  const amenitiesList = ['Wi-Fi', 'Charging Point', 'Blanket', 'Water Bottle', 'Entertainment', 'Snacks'];
 
   const handleBookNow = (bus) => {
     navigate('/booking', { state: { item: bus, type: 'bus' } });
   };
 
+  const handleViewDetails = (bus) => {
+    navigate(`/bus/${bus.id}`, { state: { bus } });
+  };
+
+  const toggleBusType = (type) => {
+    setSelectedBusTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
   const getFilteredBuses = () => {
-    let filtered = [...buses];
+    let filtered = [...allBuses];
     
     if (searchQuery) {
       filtered = filtered.filter(b => 
         b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.operator.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.from.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.to.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.operator.toLowerCase().includes(searchQuery.toLowerCase())
+        b.to.city.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (selectedBusTypes.length > 0) {
+      filtered = filtered.filter(bus => 
+        selectedBusTypes.every(type => bus.busType.includes(type))
       );
     }
     
@@ -164,17 +496,35 @@ const BusesDashboard = () => {
       filtered.sort((a, b) => b.price - a.price);
     } else if (selectedFilter === 'duration') {
       filtered.sort((a, b) => {
-        const getHours = (d) => parseInt(d.split('h')[0]) * 60 + parseInt(d.split('h')[1]?.replace('m', '') || 0);
-        return getHours(a.duration) - getHours(b.duration);
+        const getMinutes = (d) => {
+          const parts = d.split('h');
+          return parseInt(parts[0]) * 60 + parseInt(parts[1]?.replace('m', '') || 0);
+        };
+        return getMinutes(a.duration) - getMinutes(b.duration);
       });
     } else if (selectedFilter === 'rating') {
       filtered.sort((a, b) => b.rating - a.rating);
+    } else if (selectedFilter === 'departure') {
+      filtered.sort((a, b) => {
+        const timeA = parseInt(a.from.time.split(':')[0]) * 60 + parseInt(a.from.time.split(':')[1]);
+        const timeB = parseInt(b.from.time.split(':')[0]) * 60 + parseInt(b.from.time.split(':')[1]);
+        return timeA - timeB;
+      });
     }
     
     return filtered;
   };
 
   const filteredBuses = getFilteredBuses();
+  const hasMore = visibleCount < filteredBuses.length;
+
+  const handleLoadMore = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setVisibleCount(prev => Math.min(prev + 8, filteredBuses.length));
+      setLoading(false);
+    }, 500);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,11 +550,11 @@ const BusesDashboard = () => {
               Book Bus Tickets
             </h1>
             <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
-              Travel comfortably with our premium bus partners across India
+              Travel comfortably with India's largest bus network
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
               <div className="flex flex-col md:flex-row">
                 <div className="flex-1 flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-200">
                   <MapPin className="w-5 h-5 text-gray-400 mr-2" />
@@ -335,82 +685,103 @@ const BusesDashboard = () => {
           </div>
 
           {/* Expanded Filters */}
-          {showFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              className="overflow-hidden"
-            >
-              <div className="border-t border-gray-200 mt-4 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Bus Type Filter */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Bus Type</h3>
-                    <div className="space-y-2">
-                      {busTypes.map(type => (
-                        <label key={type} className="flex items-center gap-2">
-                          <input type="checkbox" className="rounded text-orange-600 focus:ring-orange-500" />
-                          <span className="text-sm text-gray-700">{type}</span>
-                        </label>
-                      ))}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="border-t border-gray-200 mt-4 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Bus Type Filter */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Bus Type</h3>
+                      <div className="space-y-2">
+                        {busTypeOptions.map(type => (
+                          <label key={type} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedBusTypes.includes(type)}
+                              onChange={() => toggleBusType(type)}
+                              className="rounded text-orange-600 focus:ring-orange-500"
+                            />
+                            <span className="text-sm text-gray-700">{type}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Departure Time */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Departure Time</h3>
+                      <div className="space-y-2">
+                        {['Early Morning (12am-6am)', 'Morning (6am-12pm)', 'Afternoon (12pm-6pm)', 'Evening (6pm-12am)'].map(time => (
+                          <label key={time} className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded text-orange-600 focus:ring-orange-500" />
+                            <span className="text-sm text-gray-700">{time}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Amenities */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Amenities</h3>
+                      <div className="space-y-2">
+                        {amenitiesList.map(amenity => (
+                          <label key={amenity} className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded text-orange-600 focus:ring-orange-500" />
+                            <span className="text-sm text-gray-700">{amenity}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Price Range */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Price Range</h3>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2000"
+                        step="50"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange({ ...priceRange, max: parseInt(e.target.value) })}
+                        className="w-full accent-orange-600"
+                      />
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-sm text-gray-600">₹0</span>
+                        <span className="text-sm text-gray-600">₹{priceRange.max.toLocaleString()}+</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Departure Time */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Departure Time</h3>
-                    <div className="space-y-2">
-                      {['Early Morning (12am-6am)', 'Morning (6am-12pm)', 'Afternoon (12pm-6pm)', 'Evening (6pm-12am)'].map(time => (
-                        <label key={time} className="flex items-center gap-2">
-                          <input type="checkbox" className="rounded text-orange-600 focus:ring-orange-500" />
-                          <span className="text-sm text-gray-700">{time}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Amenities */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Amenities</h3>
-                    <div className="space-y-2">
-                      {['Wi-Fi', 'Charging Point', 'Blanket', 'Water Bottle', 'Entertainment'].map(amenity => (
-                        <label key={amenity} className="flex items-center gap-2">
-                          <input type="checkbox" className="rounded text-orange-600 focus:ring-orange-500" />
-                          <span className="text-sm text-gray-700">{amenity}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price Range */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Max Price</h3>
-                    <input
-                      type="range"
-                      min="0"
-                      max="2000"
-                      step="50"
-                      className="w-full accent-orange-600"
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-gray-600">₹0</span>
-                      <span className="text-sm text-gray-600">₹2,000+</span>
-                    </div>
+                  <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedBusTypes([]);
+                        setPriceRange({ min: 0, max: 2000 });
+                      }}
+                    >
+                      Reset
+                    </Button>
+                    <Button variant="primary" size="sm" className="bg-orange-600 hover:bg-orange-700">
+                      Apply Filters
+                    </Button>
                   </div>
                 </div>
-
-                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
-                  <Button variant="outline" size="sm">Reset</Button>
-                  <Button variant="primary" size="sm" className="bg-orange-600 hover:bg-orange-700">Apply Filters</Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Bus Cards */}
-        <div className="space-y-4">
-          {filteredBuses.map((bus, index) => (
+        {/* Bus Cards Grid */}
+        <div className="grid grid-cols-1 gap-4">
+          {filteredBuses.slice(0, visibleCount).map((bus, index) => (
             <motion.div
               key={bus.id}
               initial={{ opacity: 0, y: 20 }}
@@ -426,14 +797,23 @@ const BusesDashboard = () => {
                         <Bus className="w-7 h-7 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">{bus.name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm text-gray-600">{bus.operator} • {bus.typeClass}</p>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-xl font-bold text-gray-900">{bus.name}</h3>
+                          <Badge variant="secondary" className="bg-gray-100">
+                            {bus.operator}
+                          </Badge>
                           {bus.popular && (
                             <Badge variant="primary" className="bg-orange-100 text-orange-700 border-orange-200">
                               🔥 Popular
                             </Badge>
                           )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {bus.busType.map((type, i) => (
+                            <Badge key={i} variant="secondary" size="sm" className="bg-orange-50 text-orange-700">
+                              {type}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -490,7 +870,7 @@ const BusesDashboard = () => {
                             {amenity === 'Blanket' && <Wind className="w-3 h-3 mr-1" />}
                             {amenity === 'Water Bottle' && <Droplets className="w-3 h-3 mr-1" />}
                             {amenity === 'Entertainment' && <Tv className="w-3 h-3 mr-1" />}
-                            {amenity === 'Reading Light' && <Luggage className="w-3 h-3 mr-1" />}
+                            {amenity === 'Reading Light' && <Power className="w-3 h-3 mr-1" />}
                             {amenity === 'Snacks' && <Coffee className="w-3 h-3 mr-1" />}
                             <span>{amenity}</span>
                           </Badge>
@@ -509,15 +889,23 @@ const BusesDashboard = () => {
                         <Users className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-600">{bus.seats} seats left</span>
                       </div>
-                      <Button
-                        onClick={() => handleBookNow(bus)}
-                        variant="primary"
-                        className="w-full bg-orange-600 hover:bg-orange-700 group"
-                        size="lg"
-                      >
-                        Book Now
-                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleViewDetails(bus)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          onClick={() => handleBookNow(bus)}
+                          variant="primary"
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 group"
+                        >
+                          Book Now
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -527,25 +915,35 @@ const BusesDashboard = () => {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 flex items-center gap-1">
-                        <Clock className="w-4 h-4 text-orange-600" />
-                        Boarding time: {bus.from.time}
+                        <Shield className="w-4 h-4 text-orange-600" />
+                        RTC Authorized
                       </span>
                       <span className="text-gray-600">•</span>
                       <span className="text-gray-600 flex items-center gap-1">
-                        <Luggage className="w-4 h-4 text-orange-600" />
-                        {bus.totalSeats} total seats
+                        <Clock className="w-4 h-4 text-orange-600" />
+                        Free cancellation up to 4h before
                       </span>
                     </div>
-                    <button className="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
-                      View Details
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
+                    <Badge variant="success" size="sm" className="bg-green-100">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      {bus.seats > 20 ? 'Plenty of seats' : 'Limited seats'}
+                    </Badge>
                   </div>
                 </div>
               </Card>
             </motion.div>
           ))}
         </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md">
+              <RefreshCw className="w-5 h-5 animate-spin text-orange-600" />
+              <span className="text-gray-600">Loading more buses...</span>
+            </div>
+          </div>
+        )}
 
         {/* No Results */}
         {filteredBuses.length === 0 && (
@@ -562,6 +960,7 @@ const BusesDashboard = () => {
               onClick={() => {
                 setSearchQuery('');
                 setSelectedFilter('all');
+                setSelectedBusTypes([]);
               }}
             >
               Clear All Filters
@@ -569,12 +968,25 @@ const BusesDashboard = () => {
           </motion.div>
         )}
 
-        {/* Load More */}
-        {filteredBuses.length > 0 && (
+        {/* Load More Button */}
+        {filteredBuses.length > 0 && hasMore && (
           <div className="mt-8 text-center">
-            <Button variant="outline" size="lg" className="px-12">
-              Load More Buses
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-12"
+              onClick={handleLoadMore}
+              disabled={loading}
+            >
+              Load More Buses ({visibleCount}/{filteredBuses.length})
             </Button>
+          </div>
+        )}
+
+        {/* All Loaded Message */}
+        {filteredBuses.length > 0 && !hasMore && visibleCount > 0 && (
+          <div className="mt-8 text-center">
+            <p className="text-gray-500">You've seen all {filteredBuses.length} buses</p>
           </div>
         )}
       </div>

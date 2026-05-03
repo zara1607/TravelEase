@@ -12,213 +12,18 @@ import axios from 'axios';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import { samplePackages, filterPackages, sortPackages } from '../data/samplePackages';
 
 // Fix: Define API_URL directly instead of using process.env
 const API_URL = 'http://localhost:5000/api';
-
-// Sample packages for display
-const SAMPLE_PACKAGES = [
-  {
-    _id: 'sample1',
-    packageId: 'sample1',
-    title: 'Magical Goa Beach Escape',
-    category: 'beach',
-    description: 'Enjoy the sun, sand and sea at Goa\'s best beaches with luxury accommodation and water activities.',
-    destination: {
-      city: 'Goa',
-      country: 'India'
-    },
-    duration: {
-      days: 4,
-      nights: 3
-    },
-    pricing: {
-      originalPrice: 15000,
-      discountedPrice: 12999,
-      discount: 13
-    },
-    rating: {
-      average: 4.5,
-      count: 128
-    },
-    highlights: ['Private Beach Access', 'Water Sports', 'Sunset Cruise'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Transfer'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1174&q=80'
-    }],
-    bestSeason: 'Oct-Mar',
-    reviews: 128,
-    isSample: true
-  },
-  {
-    _id: 'sample2',
-    packageId: 'sample2',
-    title: 'Kerala Backwaters & Ayurveda',
-    category: 'luxury',
-    description: 'Experience the serene backwaters of Kerala with houseboat stay and authentic Ayurvedic treatments.',
-    destination: {
-      city: 'Kerala',
-      country: 'India'
-    },
-    duration: {
-      days: 5,
-      nights: 4
-    },
-    pricing: {
-      originalPrice: 22000,
-      discountedPrice: 18999,
-      discount: 14
-    },
-    rating: {
-      average: 4.7,
-      count: 95
-    },
-    highlights: ['Houseboat Stay', 'Ayurvedic Massage', 'Kathakali Performance'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Ayurveda'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80'
-    }],
-    bestSeason: 'Sep-Mar',
-    reviews: 95,
-    isSample: true
-  },
-  {
-    _id: 'sample3',
-    packageId: 'sample3',
-    title: 'Manali Adventure Trek',
-    category: 'adventure',
-    description: 'Trek through the beautiful Himalayas, river rafting, paragliding and camping under the stars.',
-    destination: {
-      city: 'Manali',
-      country: 'India'
-    },
-    duration: {
-      days: 6,
-      nights: 5
-    },
-    pricing: {
-      originalPrice: 18000,
-      discountedPrice: 15999,
-      discount: 11
-    },
-    rating: {
-      average: 4.6,
-      count: 156
-    },
-    highlights: ['River Rafting', 'Paragliding', 'Camping', 'Trekking'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Activities', 'Guide'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1626624340240-a10d0a5ae4e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80'
-    }],
-    bestSeason: 'Apr-Jun',
-    reviews: 156,
-    isSample: true
-  },
-  {
-    _id: 'sample4',
-    packageId: 'sample4',
-    title: 'Udaipur Royal Heritage',
-    category: 'cultural',
-    description: 'Explore the city of lakes, majestic palaces, and experience royal Rajasthani culture.',
-    destination: {
-      city: 'Udaipur',
-      country: 'India'
-    },
-    duration: {
-      days: 4,
-      nights: 3
-    },
-    pricing: {
-      originalPrice: 16000,
-      discountedPrice: 13499,
-      discount: 16
-    },
-    rating: {
-      average: 4.8,
-      count: 203
-    },
-    highlights: ['Palace Visit', 'Lake Cruise', 'Folk Dance', 'Heritage Walk'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Sightseeing', 'Guide'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80'
-    }],
-    bestSeason: 'Oct-Mar',
-    reviews: 203,
-    isSample: true
-  },
-  {
-    _id: 'sample5',
-    packageId: 'sample5',
-    title: 'Andaman Island Honeymoon',
-    category: 'honeymoon',
-    description: 'Perfect honeymoon destination with pristine beaches, coral reefs and luxury resorts.',
-    destination: {
-      city: 'Andaman',
-      country: 'India'
-    },
-    duration: {
-      days: 7,
-      nights: 6
-    },
-    pricing: {
-      originalPrice: 35000,
-      discountedPrice: 29999,
-      discount: 14
-    },
-    rating: {
-      average: 4.9,
-      count: 167
-    },
-    highlights: ['Snorkeling', 'Scuba Diving', 'Sea Walking', 'Sunset View'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Activities', 'Transfer'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1173&q=80'
-    }],
-    bestSeason: 'Nov-May',
-    reviews: 167,
-    isSample: true
-  },
-  {
-    _id: 'sample6',
-    packageId: 'sample6',
-    title: 'Ranthambore Wildlife Safari',
-    category: 'wildlife',
-    description: 'Spot tigers and wildlife in their natural habitat with expert guides and luxury tents.',
-    destination: {
-      city: 'Ranthambore',
-      country: 'India'
-    },
-    duration: {
-      days: 3,
-      nights: 2
-    },
-    pricing: {
-      originalPrice: 12000,
-      discountedPrice: 9999,
-      discount: 17
-    },
-    rating: {
-      average: 4.4,
-      count: 89
-    },
-    highlights: ['Tiger Safari', 'Bird Watching', 'Nature Walk', 'Photography'],
-    inclusions: ['Flight', 'Hotel', 'Meals', 'Safari', 'Guide'],
-    images: [{
-      url: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?ixlib=rb-4.0.3&auto=format&fit=crop&w=1173&q=80'
-    }],
-    bestSeason: 'Oct-Jun',
-    reviews: 89,
-    isSample: true
-  }
-];
 
 const PackagesPageMMT = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   // State
-  const [packages, setPackages] = useState(SAMPLE_PACKAGES); // Start with sample packages
-  const [loading, setLoading] = useState(false); // Start with false since we have samples
+  const [packages, setPackages] = useState(samplePackages); // Use imported sample packages
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -270,21 +75,43 @@ const PackagesPageMMT = () => {
     if (searchQuery) {
       filtered = filtered.filter(p => 
         p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.destination?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.destination?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.destination?.country?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
     if (selectedFilter === 'price-low') {
-      filtered.sort((a, b) => (a.pricing?.discountedPrice || 0) - (b.pricing?.discountedPrice || 0));
+      filtered.sort((a, b) => {
+        const priceA = a.price || a.pricing?.discountedPrice || 0;
+        const priceB = b.price || b.pricing?.discountedPrice || 0;
+        return priceA - priceB;
+      });
     } else if (selectedFilter === 'price-high') {
-      filtered.sort((a, b) => (b.pricing?.discountedPrice || 0) - (a.pricing?.discountedPrice || 0));
+      filtered.sort((a, b) => {
+        const priceA = a.price || a.pricing?.discountedPrice || 0;
+        const priceB = b.price || b.pricing?.discountedPrice || 0;
+        return priceB - priceA;
+      });
     } else if (selectedFilter === 'rating') {
-      filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
+      filtered.sort((a, b) => {
+        const ratingA = a.rating || a.rating?.average || 0;
+        const ratingB = b.rating || b.rating?.average || 0;
+        return ratingB - ratingA;
+      });
     } else if (selectedFilter === 'duration') {
-      filtered.sort((a, b) => (a.duration?.nights || 0) - (b.duration?.nights || 0));
+      filtered.sort((a, b) => {
+        const daysA = a.duration?.nights || parseInt((a.duration || '').split(' ')[0]) || 0;
+        const daysB = b.duration?.nights || parseInt((b.duration || '').split(' ')[0]) || 0;
+        return daysA - daysB;
+      });
     } else if (selectedFilter === 'popular') {
-      filtered.sort((a, b) => (b.rating?.count || 0) - (a.rating?.count || 0));
+      filtered.sort((a, b) => {
+        const countA = a.reviews || a.rating?.count || 0;
+        const countB = b.reviews || b.rating?.count || 0;
+        return countB - countA;
+      });
     }
     
     return filtered;
@@ -359,7 +186,7 @@ const PackagesPageMMT = () => {
 
   const stats = [
     { label: 'Packages', value: packages.length, icon: Package, color: 'blue' },
-    { label: 'Destinations', value: 6, icon: Globe, color: 'green' },
+    { label: 'Destinations', value: 25, icon: Globe, color: 'green' },
     { label: 'Happy Travelers', value: '10K+', icon: Users, color: 'yellow' },
     { label: 'Best Price', value: 'Guaranteed', icon: Award, color: 'purple' }
   ];
@@ -422,7 +249,7 @@ const PackagesPageMMT = () => {
               Discover Your Dream Holiday
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Curated travel packages for every budget and style
+              {packages.length} curated travel packages for every budget and style
             </p>
 
             {/* Search Bar */}
@@ -514,20 +341,20 @@ const PackagesPageMMT = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Sample Packages Notice - Like other dashboards */}
+        {/* Sample Packages Notice */}
         {usingSamples && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-orange-100 p-2 rounded-lg">
                 <Package className="w-5 h-5 text-orange-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Sample Packages</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Travel Packages ({packages.length})</h2>
               <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium ml-3">
                 Demo Mode
               </span>
             </div>
             <p className="text-gray-600">
-              These are sample packages for demonstration. Connect your backend to see real packages.
+              Browse our collection of {packages.length} hand-picked packages from around the world.
             </p>
           </div>
         )}
@@ -711,7 +538,7 @@ const PackagesPageMMT = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPackages.map((pkg, index) => (
             <motion.div
-              key={pkg._id || pkg.packageId || index}
+              key={pkg._id || pkg.packageId || pkg.id || index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -721,8 +548,8 @@ const PackagesPageMMT = () => {
                 {/* Image */}
                 <div className="relative h-56 overflow-hidden">
                   <img
-                    src={pkg.images?.[0]?.url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'}
-                    alt={pkg.title}
+                    src={pkg.images?.[0]?.url || pkg.image || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'}
+                    alt={pkg.title || pkg.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   
@@ -734,43 +561,45 @@ const PackagesPageMMT = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                       setWishlist(prev => 
-                        prev.includes(pkg._id) 
-                          ? prev.filter(id => id !== pkg._id)
-                          : [...prev, pkg._id]
+                        prev.includes(pkg._id || pkg.id) 
+                          ? prev.filter(id => id !== (pkg._id || pkg.id))
+                          : [...prev, pkg._id || pkg.id]
                       );
                     }}
                     className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm hover:bg-white p-2 rounded-full shadow-lg transition-all z-10"
                   >
-                    <Heart className={`w-5 h-5 ${wishlist.includes(pkg._id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                    <Heart className={`w-5 h-5 ${wishlist.includes(pkg._id || pkg.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
                   </button>
 
                   {/* Discount Badge */}
-                  {pkg.pricing?.discount > 0 && (
+                  {(pkg.discount || pkg.pricing?.discount) > 0 && (
                     <div className="absolute top-3 left-3">
                       <Badge variant="primary" className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
                         <Tag className="w-3 h-3 mr-1" />
-                        {pkg.pricing.discount}% OFF
+                        {pkg.discount || pkg.pricing?.discount}% OFF
                       </Badge>
                     </div>
                   )}
 
                   {/* Category Badge */}
-                  <div className="absolute bottom-3 left-3">
-                    <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-900 border-0">
-                      {categoryIcons[pkg.category] || <Package className="w-3 h-3 mr-1" />}
-                      <span className="text-xs font-bold uppercase tracking-wide">{pkg.category}</span>
-                    </Badge>
-                  </div>
+                  {pkg.category && (
+                    <div className="absolute bottom-3 left-3">
+                      <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-900 border-0">
+                        {categoryIcons[pkg.category] || <Package className="w-3 h-3 mr-1" />}
+                        <span className="text-xs font-bold uppercase tracking-wide">{pkg.category}</span>
+                      </Badge>
+                    </div>
+                  )}
 
                   {/* Duration Badge */}
                   <div className="absolute bottom-3 right-3">
                     <Badge variant="primary" className="bg-blue-600 text-white border-0">
                       <Clock className="w-3 h-3 mr-1" />
-                      {pkg.duration?.days || pkg.duration?.nights || 'N/A'}D/{pkg.duration?.nights || 'N/A'}N
+                      {pkg.duration || (pkg.duration?.days ? `${pkg.duration.days}D/${pkg.duration.nights}N` : 'N/A')}
                     </Badge>
                   </div>
 
-                  {/* Sample Badge - Like other dashboards */}
+                  {/* Sample Badge */}
                   {pkg.isSample && (
                     <div className="absolute top-3 left-16">
                       <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200">
@@ -785,16 +614,19 @@ const PackagesPageMMT = () => {
                   {/* Title & Location */}
                   <div className="mb-3">
                     <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                      {pkg.title}
+                      {pkg.title || pkg.name}
                     </h3>
                     <div className="flex items-center gap-1 text-gray-500 mt-1">
                       <MapPin className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-sm truncate">{pkg.destination?.city}, {pkg.destination?.country}</span>
+                      <span className="text-sm truncate">
+                        {pkg.destination?.city || pkg.destination || pkg.location || 'International'}
+                        {pkg.destination?.country ? `, ${pkg.destination.country}` : ''}
+                      </span>
                     </div>
                   </div>
 
                   {/* Highlights */}
-                  {pkg.highlights && pkg.highlights.length > 0 && (
+                  {(pkg.highlights && pkg.highlights.length > 0) && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {pkg.highlights.slice(0, 2).map((highlight, i) => (
                         <Badge key={i} variant="secondary" size="sm" className="bg-green-50 text-green-700 border-green-100">
@@ -806,14 +638,14 @@ const PackagesPageMMT = () => {
                   )}
 
                   {/* Rating */}
-                  {pkg.rating && pkg.rating.average > 0 && (
+                  {(pkg.rating || pkg.rating?.average) > 0 && (
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex items-center bg-green-600 text-white px-2 py-1 rounded font-bold text-sm gap-1">
                         <Star className="w-3.5 h-3.5 fill-white" />
-                        {pkg.rating.average.toFixed(1)}
+                        {(pkg.rating || pkg.rating?.average).toFixed(1)}
                       </div>
                       <span className="text-sm text-gray-600">
-                        ({pkg.rating.count} reviews)
+                        ({pkg.reviews || pkg.rating?.count || 0} reviews)
                       </span>
                       {pkg.bestSeason && (
                         <span className="text-xs text-gray-500 ml-auto">
@@ -824,17 +656,17 @@ const PackagesPageMMT = () => {
                   )}
 
                   {/* Inclusions Preview */}
-                  {pkg.inclusions && pkg.inclusions.length > 0 && (
+                  {(pkg.inclusions || pkg.includes) && (pkg.inclusions?.length > 0 || pkg.includes?.length > 0) && (
                     <div className="flex flex-wrap gap-1.5 mb-4">
-                      {pkg.inclusions.slice(0, 3).map((item, i) => (
+                      {(pkg.inclusions || pkg.includes || []).slice(0, 3).map((item, i) => (
                         <Badge key={i} variant="secondary" size="sm" className="bg-blue-50 text-blue-700 border-blue-100">
                           {inclusionIcons[item] || <Package className="w-3 h-3 mr-1" />}
                           <span className="text-xs">{item.length > 15 ? item.substring(0, 15) + '...' : item}</span>
                         </Badge>
                       ))}
-                      {pkg.inclusions.length > 3 && (
+                      {(pkg.inclusions?.length > 3 || pkg.includes?.length > 3) && (
                         <Badge variant="secondary" size="sm" className="bg-gray-100">
-                          +{pkg.inclusions.length - 3}
+                          +{(pkg.inclusions?.length || pkg.includes?.length) - 3}
                         </Badge>
                       )}
                     </div>
@@ -843,26 +675,26 @@ const PackagesPageMMT = () => {
                   {/* Price & CTA */}
                   <div className="flex items-end justify-between mt-4 pt-4 border-t border-gray-100">
                     <div>
-                      {pkg.pricing?.originalPrice !== pkg.pricing?.discountedPrice && (
+                      {((pkg.originalPrice || pkg.pricing?.originalPrice) !== (pkg.price || pkg.pricing?.discountedPrice)) && (
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm text-gray-500 line-through">
-                            ₹{pkg.pricing?.originalPrice?.toLocaleString('en-IN')}
+                            ${(pkg.originalPrice || pkg.pricing?.originalPrice)?.toLocaleString()}
                           </span>
                           <Badge variant="primary" size="sm" className="bg-red-100 text-red-700 border-red-200">
-                            Save ₹{(pkg.pricing?.originalPrice - pkg.pricing?.discountedPrice).toLocaleString('en-IN')}
+                            Save ${((pkg.originalPrice || pkg.pricing?.originalPrice) - (pkg.price || pkg.pricing?.discountedPrice)).toLocaleString()}
                           </Badge>
                         </div>
                       )}
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-bold text-blue-600">
-                          ₹{pkg.pricing?.discountedPrice?.toLocaleString('en-IN') || '0'}
+                          ${(pkg.price || pkg.pricing?.discountedPrice)?.toLocaleString() || '0'}
                         </span>
                         <span className="text-sm text-gray-600">per person</span>
                       </div>
                     </div>
 
                     <Button
-                      onClick={() => navigate(`/package/${pkg._id || pkg.packageId}`)}
+                      onClick={() => navigate(`/package/${pkg._id || pkg.packageId || pkg.id}`)}
                       variant="primary"
                       size="sm"
                       className="group"

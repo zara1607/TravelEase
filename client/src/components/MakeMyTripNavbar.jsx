@@ -1,71 +1,78 @@
+// src/components/MakeMyTripNavbar.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Search, X, Menu, User, Bell, ChevronDown, 
-  Plane, Building2, Package, Train, Bus, Car, 
-  Heart, ShoppingBag
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+  Search,
+  X,
+  Menu,
+  User,
+  Bell,
+  ChevronDown,
+  Plane,
+  Building2,
+  Package,
+  Train,
+  Bus,
+  Car,
+  Ship,
+  Globe,
+  Shield,
+  Heart,
+  LogOut,
+  Settings,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Button from '../ui/Button';
 
 const MakeMyTripNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
-  
-  // State
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  
-  const searchRef = useRef(null);
-  const userMenuRef = useRef(null);
+
+  const userDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
 
-  // Navigation items
-  const navItems = [
-    { id: 'flights', label: 'Flights', icon: Plane, path: '/flights' },
+  // All travel services - Flights now correctly points to dashboard
+  const travelServices = [
+    { id: 'flights', label: 'Flights', icon: Plane, path: '/flights' },      // ← This goes to FlightsDashboard
     { id: 'hotels', label: 'Hotels', icon: Building2, path: '/hotels' },
     { id: 'packages', label: 'Packages', icon: Package, path: '/packages' },
     { id: 'trains', label: 'Trains', icon: Train, path: '/trains' },
     { id: 'buses', label: 'Buses', icon: Bus, path: '/buses' },
-    { id: 'cabs', label: 'Cabs', icon: Car, path: '/cabs' }
+    { id: 'cabs', label: 'Cabs', icon: Car, path: '/cabs' },
+    { id: 'cruises', label: 'Cruises', icon: Ship, path: '/cruises' },
+    { id: 'visa', label: 'Visa', icon: Globe, path: '/visa' },
+    { id: 'insurance', label: 'Insurance', icon: Shield, path: '/insurance' },
   ];
 
-  // Mock notifications
+  // User menu items
+  const userMenuItems = [
+    { id: 'profile', label: 'My Profile', icon: User, path: '/profile' },
+    { id: 'bookings', label: 'My Bookings', icon: Clock, path: '/bookings' },
+    { id: 'wishlist', label: 'Wishlist', icon: Heart, path: '/wishlist' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+  ];
+
+  // Scroll effect
   useEffect(() => {
-    const mockNotifications = [
-      {
-        id: 1,
-        title: 'Booking Confirmed',
-        message: 'Your Dubai package booking is confirmed',
-        time: '2 hours ago',
-        read: false
-      },
-      {
-        id: 2,
-        title: 'Price Drop Alert',
-        message: 'Mumbai flights price dropped by 20%',
-        time: '5 hours ago',
-        read: false
-      }
-    ];
-    
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setShowUserMenu(false);
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
       }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
         setShowNotifications(false);
@@ -76,426 +83,332 @@ const MakeMyTripNavbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Handlers
-  const handleSearch = (e) => {
-    e?.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
-      setSearchQuery('');
-    }
-  };
+  // Close mobile menu & dropdowns on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsUserDropdownOpen(false);
+    setShowNotifications(false);
+  }, [location.pathname]);
+
+  // Mock notifications
+  useEffect(() => {
+    const mock = [
+      { id: 1, title: 'Booking Confirmed', message: 'Your Dubai package is confirmed', time: '2h ago', read: false },
+      { id: 2, title: 'Price Drop Alert', message: 'Mumbai flights dropped 20%', time: '5h ago', read: false },
+    ];
+    setNotifications(mock);
+    setUnreadCount(mock.filter((n) => !n.read).length);
+  }, []);
 
   const handleNavigation = (path) => {
     navigate(path);
-    setShowMobileMenu(false);
-  };
-
-  const handleLogoClick = () => {
-    navigate('/');
-    setShowMobileMenu(false);
-  };
-
-  const handleWishlistClick = () => {
-    if (!isAuthenticated) {
-      sessionStorage.setItem('redirectAfterLogin', '/wishlist');
-      navigate('/login');
-    } else {
-      navigate('/wishlist');
-    }
-  };
-
-  const handleBookingsClick = () => {
-    if (!isAuthenticated) {
-      sessionStorage.setItem('redirectAfterLogin', '/bookings');
-      navigate('/login');
-    } else {
-      navigate('/bookings');
-    }
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = () => {
     logout();
-    setShowUserMenu(false);
+    setIsUserDropdownOpen(false);
     navigate('/');
   };
 
   const handleNotificationClick = (notification) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
     );
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
     setShowNotifications(false);
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Logo */}
-          <div 
-            onClick={handleLogoClick}
-            className="flex items-center cursor-pointer"
-          >
-            <div className="flex items-center">
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-2 rounded-lg">
-                <Plane className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="ml-3 text-2xl font-bold">
-                <span className="text-blue-600">Travel</span>
-                <span className="text-gray-800">Ease</span>
-              </h1>
-            </div>
-          </div>
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white/95 backdrop-blur-md shadow-sm'
+            : 'bg-white border-b border-gray-100'
+        }`}
+        style={{ height: '68px' }}
+      >
+        <div className="h-full w-full max-w-[1440px] mx-auto px-6 lg:px-8">
+          <div className="h-full flex items-center justify-between">
+            {/* Logo - Compact */}
+            <Link to="/" className="flex items-center flex-shrink-0">
+              <span className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                TravelEase
+              </span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                    active
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+            {/* Desktop Navigation - Center with even spacing */}
+            <div className="hidden lg:flex items-center justify-center flex-1 mx-8">
+              <div className="flex items-center justify-between gap-8 max-w-3xl w-full">
+                {travelServices.map((service) => {
+                  const Icon = service.icon;
+                  const active = isActive(service.path);
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-xl mx-6" ref={searchRef}>
-            <div className="relative w-full">
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchOpen(true)}
-                    placeholder="Search destinations, hotels, packages..."
-                    className="w-full pl-12 pr-12 py-3 bg-gray-100 border-2 border-transparent rounded-full text-gray-900 placeholder-gray-500 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setIsSearchOpen(false);
-                      }}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  return (
+                    <Link
+                      key={service.id}
+                      to={service.path}
+                      className="flex flex-col items-center group"
                     >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-          </div>
-
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-2">
-            
-            {/* Mobile Search */}
-            <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <Search className="w-5 h-5 text-gray-700" />
-            </button>
-
-            {/* Notifications */}
-            <div className="hidden md:flex relative" ref={notificationsRef}>
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Bell className="w-5 h-5 text-gray-700" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
-                  <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllAsRead}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                      <div className="relative">
+                        <Icon 
+                          className={`w-[22px] h-[22px] transition-all duration-200 ${
+                            active 
+                              ? 'text-blue-600' 
+                              : 'text-gray-500 group-hover:text-blue-600'
+                          }`} 
+                        />
+                        {active && (
+                          <span className="absolute -bottom-[2px] left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
+                        )}
+                      </div>
+                      <span 
+                        className={`text-[13px] font-medium mt-1 transition-colors whitespace-nowrap ${
+                          active 
+                            ? 'text-blue-600' 
+                            : 'text-gray-500 group-hover:text-blue-600'
+                        }`}
                       >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="divide-y divide-gray-100">
-                    {notifications.length > 0 ? (
-                      notifications.map((notification) => (
+                        {service.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Side Actions */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Notifications */}
+              <div className="relative hidden md:block" ref={notificationsRef}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <Bell className="w-[22px] h-[22px] text-gray-600" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 max-h-96 overflow-y-auto">
+                    <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white">
+                      <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button onClick={markAllAsRead} className="text-xs text-blue-600 hover:underline">
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <Bell className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
                         <button
-                          key={notification.id}
-                          onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-                            !notification.read ? 'bg-blue-50' : ''
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`w-full text-left p-3 hover:bg-gray-50 border-b last:border-none transition-colors ${
+                            !n.read ? 'bg-blue-50/30' : ''
                           }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-2 h-2 rounded-full mt-2 ${
-                              !notification.read ? 'bg-blue-600' : 'bg-gray-300'
-                            }`}></div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 mb-1">
-                                {notification.title}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-1">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-400">{notification.time}</p>
-                            </div>
-                          </div>
+                          <p className="font-medium text-gray-900 text-sm">{n.title}</p>
+                          <p className="text-xs text-gray-600 mt-0.5">{n.message}</p>
+                          <p className="text-[10px] text-gray-500 mt-1">{n.time}</p>
                         </button>
                       ))
-                    ) : (
-                      <div className="p-8 text-center text-gray-500">
-                        <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p>No notifications</p>
-                      </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Wishlist */}
-            <button 
-              onClick={handleWishlistClick}
-              className="hidden md:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Heart className="w-5 h-5 text-gray-700" />
-            </button>
+              {/* Wishlist */}
+              <button
+                onClick={() => (isAuthenticated ? navigate('/wishlist') : navigate('/login'))}
+                className="hidden md:block p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Heart className="w-[22px] h-[22px] text-gray-600" />
+              </button>
 
-            {/* My Trips */}
-            <button 
-              onClick={handleBookingsClick}
-              className="hidden md:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ShoppingBag className="w-5 h-5 text-gray-700" />
-            </button>
-
-            {/* User Menu */}
-            <div className="relative" ref={userMenuRef}>
+              {/* User / Auth */}
               {isAuthenticated ? (
-                <>
+                <div className="relative" ref={userDropdownRef}>
                   <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                      {user?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <ChevronDown className="w-4 h-4 text-gray-600 hidden md:block" />
+                    <span className="hidden md:block text-sm font-medium text-gray-600">
+                      {user?.name?.split(' ')[0] || 'User'}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
                   </button>
 
-                  {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-50">
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <div className="font-semibold text-gray-900">
-                          {user?.name || 'Guest User'}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {user?.email || 'guest@travelease.com'}
-                        </div>
+                  {isUserDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                       </div>
-                      
-                      {/* ✅ FIXED: My Profile - Correct path */}
-                      <button
-                        onClick={() => {
-                          navigate('/profile');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        My Profile
-                      </button>
-                      
-                      {/* ✅ FIXED: My Bookings - Correct path */}
-                      <button
-                        onClick={() => {
-                          navigate('/bookings');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        My Bookings
-                      </button>
-                      
-                      {/* ✅ Wishlist - Correct path */}
-                      <button 
-                        onClick={() => {
-                          navigate('/wishlist');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Wishlist
-                      </button>
-                      
-                      {/* ✅ FIXED: Settings - Correct path */}
-                      <button
-                        onClick={() => {
-                          navigate('/settings');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Settings
-                      </button>
-                      
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors font-medium"
+
+                      {userMenuItems.map((item) => (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-600 hover:text-blue-600 transition-colors text-sm"
+                          onClick={() => setIsUserDropdownOpen(false)}
                         >
-                          Logout
-                        </button>
-                      </div>
+                          <item.icon className="w-4 h-4" />
+                          {item.label}
+                        </Link>
+                      ))}
+
+                      <div className="border-t border-gray-100 my-1"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition-colors text-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
                     </div>
                   )}
-                </>
+                </div>
               ) : (
-                <button
-                  onClick={() => navigate('/login')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Login
-                </button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/login')}
+                    className="text-sm px-3 py-1.5"
+                  >
+                    Login
+                  </Button>
+                  <Button 
+                    variant="primary" 
+                    size="sm" 
+                    onClick={() => navigate('/register')}
+                    className="text-sm px-3 py-1.5"
+                  >
+                    Register
+                  </Button>
+                </div>
               )}
-            </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <Menu className="w-5 h-5 text-gray-700" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Search Bar */}
-      {isSearchOpen && (
-        <div className="md:hidden border-t border-gray-200 p-4">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full pl-12 pr-12 py-3 bg-gray-100 border-2 border-transparent rounded-full focus:bg-white focus:border-blue-500 focus:outline-none"
-                autoFocus
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Mobile Menu */}
-      {showMobileMenu && (
-        <div className="lg:hidden border-t border-gray-200 bg-white">
-          <div className="p-4 space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                    active
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
-                </button>
-              );
-            })}
-            
-            <div className="border-t border-gray-200 pt-2 mt-2">
+              {/* Mobile Menu Button */}
               <button
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  setShowMobileMenu(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                <Bell className="w-5 h-5" />
-                Notifications
-                {unreadCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {unreadCount}
-                  </span>
+                {isMobileMenuOpen ? (
+                  <X className="w-[22px] h-[22px] text-gray-600" />
+                ) : (
+                  <Menu className="w-[22px] h-[22px] text-gray-600" />
                 )}
               </button>
-              
-              <button 
-                onClick={() => {
-                  handleWishlistClick();
-                  setShowMobileMenu(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                <Heart className="w-5 h-5" />
-                Wishlist
-              </button>
-              
-              <button 
-                onClick={() => {
-                  handleBookingsClick();
-                  setShowMobileMenu(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                <ShoppingBag className="w-5 h-5" />
-                My Bookings
-              </button>
             </div>
           </div>
         </div>
-      )}
-    </nav>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileMenuOpen(false)}>
+            <div
+              className="absolute top-[68px] left-0 right-0 bg-white max-h-[calc(100vh-68px)] overflow-y-auto shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-4">
+                {/* Mobile Travel Services Grid */}
+                <div className="grid grid-cols-3 gap-3">
+                  {travelServices.map((service) => {
+                    const Icon = service.icon;
+                    const active = isActive(service.path);
+
+                    return (
+                      <Link
+                        key={service.id}
+                        to={service.path}
+                        className={`flex flex-col items-center p-3 rounded-lg transition-all ${
+                          active ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50 text-gray-600'
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Icon className="w-5 h-5 mb-1" />
+                        <span className="text-xs font-medium text-center">{service.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile User Section */}
+                {isAuthenticated ? (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-3 mb-3 p-2 bg-gray-50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                        {user?.name?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {userMenuItems.map((item) => (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <item.icon className="w-4 h-4 text-gray-600" />
+                          <span className="text-xs font-medium">{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full mt-2 flex items-center justify-center gap-2 p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                    <Button variant="outline" size="sm" fullWidth onClick={() => navigate('/login')}>
+                      Login
+                    </Button>
+                    <Button variant="primary" size="sm" fullWidth onClick={() => navigate('/register')}>
+                      Register
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Spacer - Exact height of navbar */}
+      <div style={{ height: '68px' }}></div>
+    </>
   );
 };
 

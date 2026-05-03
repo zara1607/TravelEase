@@ -12,13 +12,23 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Home from '../pages/Home';
 import Search from '../pages/Search';
 import Booking from '../pages/Booking';
+import BookingDetails from '../pages/BookingDetails';
+import BookingCancel from '../pages/BookingCancel';
+import BookingConfirmation from '../pages/BookingConfirmation';
 import NotFound from '../pages/NotFound';
 import PackagesPageMMT from '../pages/PackagesPageMMT';
+import PackageDetails from '../pages/PackageDetails';
 import FlightsDashboard from '../pages/FlightsDashboard';
 import HotelsDashboard from '../pages/HotelsDashboard';
 import TrainsDashboard from '../pages/TrainsDashboard';
 import BusesDashboard from '../pages/BusesDashboard';
 import CabsDashboard from '../pages/CabsDashboard';
+
+// New Service Pages
+import VisaServices from '../pages/VisaServices';
+import TravelInsurance from '../pages/TravelInsurance';
+import Cruises from '../pages/Cruises';
+import CruiseBooking from '../pages/CruiseBooking';
 
 // Auth Pages
 import Login from '../features/auth/Login';
@@ -29,12 +39,12 @@ import Dashboard from '../features/dashboard/Dashboard';
 import BookingHistory from '../features/dashboard/BookingHistory';
 import Profile from '../features/dashboard/Profile';
 
-// User Pages (newly created)
+// User Pages
 import Wishlist from '../pages/Wishlist';
 import UserProfile from '../pages/Profile';
 import Settings from '../pages/Settings';
 
-// Placeholder pages (for any remaining)
+// Placeholder pages
 import {
   ToursPage,
   VisaPage,
@@ -58,7 +68,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    // Store intent for after login
     localStorage.setItem('lastIntent', JSON.stringify({
       path: location.pathname,
       search: location.search,
@@ -110,30 +119,40 @@ export const AppRoutes = () => {
         <Route path="/flights" element={<FlightsDashboard />} />
         <Route path="/hotels" element={<HotelsDashboard />} />
         <Route path="/packages" element={<PackagesPageMMT />} />
+        <Route path="/package/:id" element={<PackageDetails />} />
         <Route path="/trains" element={<TrainsDashboard />} />
         <Route path="/buses" element={<BusesDashboard />} />
         <Route path="/cabs" element={<CabsDashboard />} />
         
-        {/* Additional Services */}
+        {/* New Service Dashboards */}
+        <Route path="/visa" element={<VisaServices />} />
+        <Route path="/insurance" element={<TravelInsurance />} />
+        <Route path="/cruises" element={<Cruises />} />
+        <Route path="/cruise-booking/:id" element={<CruiseBooking />} />
+        
+        {/* Additional Services (Placeholders) */}
         <Route path="/homestays" element={<HomestaysPage />} />
         <Route path="/tours" element={<ToursPage />} />
-        <Route path="/visa" element={<VisaPage />} />
         <Route path="/cruise" element={<CruisePage />} />
         <Route path="/forex" element={<ForexPage />} />
-        <Route path="/insurance" element={<InsurancePage />} />
         
         {/* Booking Routes */}
         <Route path="/booking" element={<Booking />} />
         <Route path="/booking/:id" element={<Booking />} />
+        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         <Route path="/flights/:id/book" element={<Booking />} />
         <Route path="/hotels/:id/book" element={<Booking />} />
         <Route path="/packages/:id/book" element={<Booking />} />
-        <Route path="/package/:id" element={<PackagesPageMMT />} />
         
-        {/* User Pages (Public - but some may redirect if not logged in) */}
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/settings" element={<Settings />} />
+        {/* User Pages (Protected) */}
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        
+        {/* Booking History Pages (Protected) */}
+        <Route path="/bookings" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
+        <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
+        <Route path="/bookings/cancel/:id" element={<ProtectedRoute><BookingCancel /></ProtectedRoute>} />
       </Route>
 
       {/* Auth Routes */}
@@ -159,7 +178,7 @@ export const AppRoutes = () => {
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/* Protected User Routes (redundant with above but kept for backward compatibility) */}
+      {/* Protected User Routes (for backward compatibility) */}
       <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/dashboard/bookings" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
       <Route path="/dashboard/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />

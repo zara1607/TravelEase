@@ -1,214 +1,273 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { SlidersHorizontal, Star, X } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card'
-import Button from '../../ui/Button'
-import Badge from '../../ui/Badge'
-import { PRICE_RANGES, AIRLINES } from '../../lib/constants'
+import React, { useState, useEffect } from 'react';
+import { FaFilter, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import Button from '../../ui/Button';
 
-const Filters = ({ onFilterChange, activeFilters = {} }) => {
-  const [localFilters, setLocalFilters] = useState({
-    priceRange: activeFilters.priceRange || null,
-    rating: activeFilters.rating || null,
-    airlines: activeFilters.airlines || [],
-    stops: activeFilters.stops || null,
-    amenities: activeFilters.amenities || []
-  })
+const Filters = ({ onFilterChange, initialFilters = {} }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState({
+    min: initialFilters.minPrice || 0,
+    max: initialFilters.maxPrice || 5000
+  });
+  const [selectedRating, setSelectedRating] = useState(initialFilters.minRating || 0);
+  const [selectedDuration, setSelectedDuration] = useState(initialFilters.duration || '');
+  const [expandedSections, setExpandedSections] = useState({
+    price: true,
+    rating: true,
+    duration: true
+  });
 
-  const handlePriceChange = (range) => {
-    const newFilters = { ...localFilters, priceRange: range }
-    setLocalFilters(newFilters)
-    onFilterChange(newFilters)
-  }
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const handlePriceChange = (type, value) => {
+    const newRange = { ...priceRange, [type]: parseInt(value) };
+    setPriceRange(newRange);
+    onFilterChange({
+      minPrice: newRange.min,
+      maxPrice: newRange.max,
+      minRating: selectedRating,
+      duration: selectedDuration
+    });
+  };
 
   const handleRatingChange = (rating) => {
-    const newFilters = { ...localFilters, rating }
-    setLocalFilters(newFilters)
-    onFilterChange(newFilters)
-  }
+    setSelectedRating(rating);
+    onFilterChange({
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      minRating: rating,
+      duration: selectedDuration
+    });
+  };
 
-  const handleAirlineToggle = (airline) => {
-    const airlines = localFilters.airlines.includes(airline)
-      ? localFilters.airlines.filter(a => a !== airline)
-      : [...localFilters.airlines, airline]
-    const newFilters = { ...localFilters, airlines }
-    setLocalFilters(newFilters)
-    onFilterChange(newFilters)
-  }
+  const handleDurationChange = (duration) => {
+    setSelectedDuration(duration);
+    onFilterChange({
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      minRating: selectedRating,
+      duration: duration
+    });
+  };
 
-  const handleStopsChange = (stops) => {
-    const newFilters = { ...localFilters, stops }
-    setLocalFilters(newFilters)
-    onFilterChange(newFilters)
-  }
-
-  const clearAllFilters = () => {
-    const resetFilters = {
-      priceRange: null,
-      rating: null,
-      airlines: [],
-      stops: null,
-      amenities: []
-    }
-    setLocalFilters(resetFilters)
-    onFilterChange(resetFilters)
-  }
-
-  const hasActiveFilters = Object.values(localFilters).some(value => 
-    Array.isArray(value) ? value.length > 0 : value !== null
-  )
+  const clearFilters = () => {
+    setPriceRange({ min: 0, max: 5000 });
+    setSelectedRating(0);
+    setSelectedDuration('');
+    onFilterChange({
+      minPrice: 0,
+      maxPrice: 5000,
+      minRating: 0,
+      duration: ''
+    });
+  };
 
   return (
-    <Card className="sticky top-24">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-5 h-5 text-primary" />
-          <CardTitle>Filters</CardTitle>
-        </div>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllFilters}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            Clear All
-          </Button>
-        )}
-      </CardHeader>
+    <>
+      {/* Mobile Filter Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-40 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+      >
+        <FaFilter className="text-xl" />
+      </button>
 
-      <CardContent className="space-y-6">
-        {/* Price Range */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Price Range</h3>
-          <div className="space-y-2">
-            {PRICE_RANGES.map((range, index) => (
-              <label
-                key={index}
-                className="flex items-center gap-2 cursor-pointer group"
+      {/* Filter Panel */}
+      <div className={`
+        fixed lg:relative inset-y-0 left-0 z-50 w-80 bg-white shadow-xl lg:shadow-none
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:block overflow-y-auto max-h-screen
+      `}>
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <FaFilter className="mr-2 text-blue-600" />
+              Filters
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearFilters}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
-                <input
-                  type="radio"
-                  name="priceRange"
-                  checked={localFilters.priceRange?.label === range.label}
-                  onChange={() => handlePriceChange(range)}
-                  className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                  {range.label}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Rating */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Rating</h3>
-          <div className="space-y-2">
-            {[5, 4, 3].map((rating) => (
-              <label
-                key={rating}
-                className="flex items-center gap-2 cursor-pointer group"
+                Clear All
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="lg:hidden text-gray-500 hover:text-gray-700"
               >
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={localFilters.rating === rating}
-                  onChange={() => handleRatingChange(rating)}
-                  className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-                />
-                <div className="flex items-center gap-1">
-                  {[...Array(rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                  <span className="text-sm text-gray-700 ml-1 group-hover:text-gray-900">
-                    & above
-                  </span>
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Stops (For Flights) */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Stops</h3>
-          <div className="space-y-2">
-            {['Non-stop', '1 Stop', '2+ Stops'].map((stop, index) => (
-              <label
-                key={index}
-                className="flex items-center gap-2 cursor-pointer group"
-              >
-                <input
-                  type="radio"
-                  name="stops"
-                  checked={localFilters.stops === stop}
-                  onChange={() => handleStopsChange(stop)}
-                  className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                  {stop}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Airlines */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Airlines</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
-            {AIRLINES.map((airline) => (
-              <label
-                key={airline.code}
-                className="flex items-center gap-2 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  checked={localFilters.airlines.includes(airline.code)}
-                  onChange={() => handleAirlineToggle(airline.code)}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                  {airline.name}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Active Filters Summary */}
-        {hasActiveFilters && (
-          <div className="pt-4 border-t border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-3 text-sm">Active Filters</h3>
-            <div className="flex flex-wrap gap-2">
-              {localFilters.priceRange && (
-                <Badge variant="primary">
-                  {localFilters.priceRange.label}
-                </Badge>
-              )}
-              {localFilters.rating && (
-                <Badge variant="primary">
-                  {localFilters.rating}★ & above
-                </Badge>
-              )}
-              {localFilters.stops && (
-                <Badge variant="primary">
-                  {localFilters.stops}
-                </Badge>
-              )}
-              {localFilters.airlines.length > 0 && (
-                <Badge variant="primary">
-                  {localFilters.airlines.length} Airlines
-                </Badge>
-              )}
+                <FaTimes className="text-xl" />
+              </button>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
 
-export default Filters
+          {/* Price Range Filter */}
+          <div className="mb-6 border-b pb-4">
+            <button
+              onClick={() => toggleSection('price')}
+              className="flex justify-between items-center w-full mb-3"
+            >
+              <h3 className="font-semibold text-gray-700">Price Range</h3>
+              {expandedSections.price ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            
+            {expandedSections.price && (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500">Min ($)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="5000"
+                      step="100"
+                      value={priceRange.min}
+                      onChange={(e) => handlePriceChange('min', e.target.value)}
+                      className="w-full"
+                    />
+                    <div className="text-sm font-medium text-gray-700">${priceRange.min}</div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500">Max ($)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="5000"
+                      step="100"
+                      value={priceRange.max}
+                      onChange={(e) => handlePriceChange('max', e.target.value)}
+                      className="w-full"
+                    />
+                    <div className="text-sm font-medium text-gray-700">${priceRange.max}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={priceRange.min}
+                    onChange={(e) => handlePriceChange('min', e.target.value)}
+                    className="w-1/2 px-3 py-2 border rounded-lg text-sm"
+                    placeholder="Min"
+                  />
+                  <input
+                    type="number"
+                    value={priceRange.max}
+                    onChange={(e) => handlePriceChange('max', e.target.value)}
+                    className="w-1/2 px-3 py-2 border rounded-lg text-sm"
+                    placeholder="Max"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rating Filter */}
+          <div className="mb-6 border-b pb-4">
+            <button
+              onClick={() => toggleSection('rating')}
+              className="flex justify-between items-center w-full mb-3"
+            >
+              <h3 className="font-semibold text-gray-700">Rating</h3>
+              {expandedSections.rating ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            
+            {expandedSections.rating && (
+              <div className="space-y-2">
+                {[4.5, 4.0, 3.5, 3.0].map((rating) => (
+                  <label key={rating} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="rating"
+                      checked={selectedRating === rating}
+                      onChange={() => handleRatingChange(rating)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">{rating}+ stars</span>
+                  </label>
+                ))}
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="rating"
+                    checked={selectedRating === 0}
+                    onChange={() => handleRatingChange(0)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">All ratings</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Duration Filter */}
+          <div className="mb-6">
+            <button
+              onClick={() => toggleSection('duration')}
+              className="flex justify-between items-center w-full mb-3"
+            >
+              <h3 className="font-semibold text-gray-700">Duration</h3>
+              {expandedSections.duration ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            
+            {expandedSections.duration && (
+              <div className="space-y-2">
+                {[
+                  { value: 'short', label: 'Short (1-5 days)' },
+                  { value: 'medium', label: 'Medium (6-8 days)' },
+                  { value: 'long', label: 'Long (9+ days)' }
+                ].map((option) => (
+                  <label key={option.value} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value={option.value}
+                      checked={selectedDuration === option.value}
+                      onChange={(e) => handleDurationChange(e.target.value)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">{option.label}</span>
+                  </label>
+                ))}
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="duration"
+                    value=""
+                    checked={selectedDuration === ''}
+                    onChange={() => handleDurationChange('')}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">All durations</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Apply Button for Mobile */}
+          <Button
+            variant="primary"
+            className="w-full lg:hidden mt-4"
+            onClick={() => setIsOpen(false)}
+          >
+            Apply Filters
+          </Button>
+        </div>
+      </div>
+
+      {/* Overlay for Mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  );
+};
+
+export default Filters;

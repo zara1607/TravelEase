@@ -1,182 +1,177 @@
-import React, { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Search, MapPin, Calendar, Users, X } from 'lucide-react'
-import Button from '../../ui/Button'
-import { motion } from 'framer-motion'
+// client/src/features/search/SearchBar.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaSearch, FaMapMarkerAlt, FaCalendarAlt, FaUsers } from 'react-icons/fa';
+import Button from '../../ui/Button';
 
-const SearchBar = ({ onSearch }) => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [filters, setFilters] = useState({
-    destination: searchParams.get('destination') || '',
-    from: searchParams.get('from') || '',
-    to: searchParams.get('to') || '',
-    checkIn: searchParams.get('checkIn') || '',
-    checkOut: searchParams.get('checkOut') || '',
-    guests: searchParams.get('guests') || '1',
-    type: searchParams.get('type') || 'flights'
-  })
+const SearchBar = ({ initialSearch = '' }) => {
+  const navigate = useNavigate();
 
-  const handleInputChange = (field, value) => {
-    setFilters(prev => ({ ...prev, [field]: value }))
-  }
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [destination, setDestination] = useState('');
+  const [date, setDate] = useState('');
+  const [travelers, setTravelers] = useState(2);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const handleSearch = () => {
-    const params = new URLSearchParams()
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value)
-    })
-    setSearchParams(params)
-    if (onSearch) onSearch(filters)
-  }
+  const popularDestinations = [
+    'Paris, France',
+    'Bali, Indonesia',
+    'Dubai, UAE',
+    'Maldives',
+    'Switzerland',
+    'Thailand',
+    'Japan',
+    'Italy',
+    'Greece',
+    'Morocco'
+  ];
 
-  const clearFilter = (field) => {
-    handleInputChange(field, '')
-  }
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!destination.trim() && !searchTerm.trim()) {
+      alert('Please enter a destination or search term');
+      return;
+    }
+
+    // Build query parameters
+    const params = new URLSearchParams();
+
+    if (destination.trim()) {
+      params.set('destination', destination.trim());
+    }
+    if (searchTerm.trim()) {
+      params.set('keyword', searchTerm.trim());
+    }
+    if (date) {
+      params.set('date', date);
+    }
+    if (travelers > 0) {
+      params.set('travelers', travelers);
+    }
+
+    // Navigate to search results page with query params
+    // You can change '/search' → '/packages' or '/results' if needed
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const selectDestination = (dest) => {
+    setDestination(dest);
+    setSearchTerm(dest);
+    setIsDropdownOpen(false);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-lg p-6 mb-6"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        {/* Destination/From Field */}
-        {filters.type === 'flights' ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
+    <div className="bg-white rounded-2xl shadow-xl p-6">
+      <form onSubmit={handleSearch}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Destination Search */}
+          <div className="relative" ref={dropdownRef}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Destination
+            </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={filters.from}
-                onChange={(e) => handleInputChange('from', e.target.value)}
-                placeholder="Departure city"
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                placeholder="Where do you want to go?"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              {filters.from && (
-                <button
-                  onClick={() => clearFilter('from')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
-          </div>
-        ) : (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={filters.destination}
-                onChange={(e) => handleInputChange('destination', e.target.value)}
-                placeholder="Where to?"
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-              {filters.destination && (
-                <button
-                  onClick={() => clearFilter('destination')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* To Field (Only for flights) */}
-        {filters.type === 'flights' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={filters.to}
-                onChange={(e) => handleInputChange('to', e.target.value)}
-                placeholder="Arrival city"
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-              {filters.to && (
-                <button
-                  onClick={() => clearFilter('to')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            {/* Popular Destinations Dropdown */}
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="p-2">
+                  <p className="text-xs font-semibold text-gray-500 px-3 py-2">
+                    Popular Destinations
+                  </p>
+                  {popularDestinations.map((dest) => (
+                    <button
+                      key={dest}
+                      type="button"
+                      onClick={() => selectDestination(dest)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <span className="text-sm">{dest}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Check-in Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {filters.type === 'flights' ? 'Departure' : 'Check-in'}
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="date"
-              value={filters.checkIn}
-              onChange={(e) => handleInputChange('checkIn', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Check-out Date (Only for hotels) */}
-        {filters.type === 'hotels' && (
+          {/* Date Picker */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Travel Date
+            </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="date"
-                value={filters.checkOut}
-                onChange={(e) => handleInputChange('checkOut', e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
-        )}
 
-        {/* Guests */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {filters.type === 'flights' ? 'Travelers' : 'Guests'}
-          </label>
-          <div className="relative">
-            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select
-              value={filters.guests}
-              onChange={(e) => handleInputChange('guests', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
+          {/* Travelers */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Travelers
+            </label>
+            <div className="relative">
+              <FaUsers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                value={travelers}
+                onChange={(e) => setTravelers(parseInt(e.target.value))}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                  <option key={num} value={num}>
+                    {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Search Button */}
+          <div className="flex items-end">
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2"
             >
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                <option key={num} value={num}>
-                  {num} {num === 1 ? (filters.type === 'flights' ? 'Traveler' : 'Guest') : (filters.type === 'flights' ? 'Travelers' : 'Guests')}
-                </option>
-              ))}
-            </select>
+              <FaSearch />
+              <span>Search Packages</span>
+            </Button>
           </div>
         </div>
-      </div>
+      </form>
+    </div>
+  );
+};
 
-      {/* Search Button */}
-      <Button
-        onClick={handleSearch}
-        size="lg"
-        fullWidth
-        icon={<Search className="w-5 h-5" />}
-      >
-        Update Search
-      </Button>
-    </motion.div>
-  )
-}
-
-export default SearchBar
+export default SearchBar;
